@@ -5,19 +5,19 @@ classdef NeoHookean
         params;
         contact;
 
-        Mu; 
-        Lambda;
-        E;
-        Nu;
-        % Rho  = 970e-12;
-        % Zeta = 0.4;
-        % Rr   = 0.2;      
-        % Cfr  = 0.2;
-        Density                = 970e-12;
-        Damping                = 0.4;
-        ContactNormalDamping   = 0.05;
-        ContactNormalReaction  = 0.1;
-        ContactTangentFriction = 0.1;
+        % Mu; 
+        % Lambda;
+        % E;
+        % Nu;
+        % % Rho  = 970e-12;
+        % % Zeta = 0.4;
+        % % Rr   = 0.2;      
+        % % Cfr  = 0.2;
+        % Density                = 970e-12;
+        % Damping                = 0.4;
+        % ContactNormalDamping   = 0.05;
+        % ContactNormalReaction  = 0.1;
+        % ContactTangentFriction = 0.1;
     end
     
     properties (Access = private)
@@ -29,9 +29,11 @@ classdef NeoHookean
 %--------------------------------------------------------------------------
 methods  
 %--------------------------------------------------------------- Mesh Class
-function obj = NeoHookeanMaterial(varargin) 
+function obj = NeoHookean(varargin) 
     
     obj.Type = 'NeoHookean';
+    obj.params  = struct;
+    obj.contact = struct;
 
     if isempty(varargin)
         E0  = 1;
@@ -48,16 +50,23 @@ function obj = NeoHookeanMaterial(varargin)
     obj.params.Nu     = Nu0;
     obj.params.Lambda = (Nu0*E0)/((1+Nu0)*(1-2*Nu0));
     obj.params.Mu     = E0/(2*(1+Nu0));
+    obj.params.Rho    = 970e-12;
+    obj.params.Zeta   = 0.4;
+
+    obj.contact.NormalDamping   = 0.05;
+    obj.contact.NormalReaction  = 0.1;
+    obj.contact.TangentFriction = 0.1;
+
 end
 %---------------------------------------------------------------------- get     
-function varargout = get(NeoHookeanMaterial,varargin)
+function varargout = get(NeoHookean,varargin)
     if nargin > 1
         varargout{nargin-1,1} = [];
         for ii = 1:length(varargin)
-            varargout{ii,1} = NeoHookeanMaterial.(varargin{ii});
+            varargout{ii,1} = NeoHookean.(varargin{ii});
         end
     else
-        varargout = NeoHookeanMaterial.(varargin);
+        varargout = NeoHookean.(varargin);
     end
 end   
 %---------------------------------------------------------------------- get     
@@ -65,18 +74,18 @@ function y = getModulus(NeoHookeanMaterial)
 y = NeoHookeanMaterial.E;
 end
 %---------------------------------------------------------------------- get     
-function y = getContactReaction(NeoHookeanMaterial)
-y = NeoHookeanMaterial.ContactNormalReaction*...
-    getModulus(NeoHookeanMaterial);
+function y = getContactReaction(NeoHookean)
+y = NeoHookean.ContactNormalReaction*...
+    getModulus(NeoHookean);
 end
 %---------------------------------------------------------------------- get     
-function y = getContactFriction(NeoHookeanMaterial)
-y = NeoHookeanMaterial.ContactTangentFriction;
+function y = getContactFriction(NeoHookean)
+y = NeoHookean.ContactTangentFriction;
 end
 %---------------------------------------------------------------------- get     
-function y = getContactDamping(NeoHookeanMaterial)
-y = NeoHookeanMaterial.ContactNormalDamping...
-    *getModulus(NeoHookeanMaterial);
+function y = getContactDamping(NeoHookean)
+y = NeoHookean.ContactNormalDamping...
+    *getModulus(NeoHookean);
 end
 %---------------------------------------------------------------------- get    
 function [S,S11,S33] = uniaxial(NeoHookeanMaterial,x)
@@ -102,8 +111,8 @@ end
 %------------------------------ 2nd Piolla stress tensor for Neo-Hookean
 function [S, D, P] = PiollaStress(NeoHookeanMaterial,F,~)
 %Se = 2nd PK stress [S11, S22, S33, S12, S23, S13];
-C100 = NeoHookeanMaterial.Mu/2; 
-K    = NeoHookeanMaterial.Lambda/2;
+C100 = NeoHookeanMaterial.params.Mu/2; 
+K    = NeoHookeanMaterial.params.Lambda/2;
 
 X12 = 1/2; 
 X13 = 1/3; 
