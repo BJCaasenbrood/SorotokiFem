@@ -4,7 +4,6 @@ classdef Fem < handle
         Mesh;
         materials;
         options;
-        states;
         solver;
         system;
         triplets;
@@ -204,7 +203,7 @@ function obj = Fem(Mesh,varargin)
     obj.options   = femoptions;
     obj.topology  = topooptions;
     obj.solver    = solveroptions;
-    obj.states    = struct;
+    obj.materials = materialoptions;
 
     obj.Mesh      = Mesh;
     obj.Dim       = Mesh.get('Dim');
@@ -213,10 +212,8 @@ function obj = Fem(Mesh,varargin)
     obj.solver.Residual = zeros(obj.Dim*obj.Mesh.NNode,1);
     obj.solver.sol.x    = zeros(obj.Dim*obj.Mesh.NNode,1);
     obj.solver.sol.dx   = zeros(obj.Dim*obj.Mesh.NNode,1);
+    obj.solver.sol.ddx  = zeros(obj.Dim*obj.Mesh.NNode,1);
     obj.solver.sol.u    = zeros(obj.Dim*obj.Mesh.NNode,1);
-    obj.states.x  = zeros(obj.Dim*obj.Mesh.NNode,1);
-    obj.states.dx = zeros(obj.Dim*obj.Mesh.NNode,1);
-    obj.states.u  = zeros(obj.Dim*obj.Mesh.NNode,1);
 
     obj.system.Gravity  = zeros(obj.Dim,1);
     
@@ -233,7 +230,7 @@ function obj = Fem(Mesh,varargin)
         if isprop(obj.options,varargin{ii})
             obj.options.(varargin{ii}) = varargin{ii+1};
         elseif isprop(obj.solver,varargin{ii})
-            obj.solver(varargin{ii}) = varargin{ii+1};
+            obj.solver.(varargin{ii}) = varargin{ii+1};
         else
             obj.(varargin{ii}) = varargin{ii+1};
         end
@@ -254,16 +251,17 @@ function varargout = get(Fem,varargin)
 end    
 %---------------------------------------------------------------------- set
 function Fem = set(Fem,varargin)
-    for ii = 1:2:length(varargin)
-        Fem.(varargin{ii}) = varargin{ii+1};
-        if strcmp(varargin{ii},'TimeStep') % overwrite initial t-step
-            Fem.TimeStep0 = varargin{ii+1}; 
-        end
-        if strcmp(varargin{ii},'FilterRadius') % regenerate filter
-            Fem.topology.SpatialFilter = GenerateRadialFilter(Fem,varargin{ii+1});
-        end
+
+for ii = 1:2:length(varargin)
+    Fem.(varargin{ii}) = varargin{ii+1};
+    if strcmpi(varargin{ii},'TimeStep') % overwrite initial t-step
+        Fem.TimeStep0 = varargin{ii+1}; 
     end
-    
+    if strcmpi(varargin{ii},'FilterRadius') % regenerate filter
+        Fem.topology.SpatialFilter = GenerateRadialFilter(Fem,varargin{ii+1});
+    end
+end
+
 end
 %--------------------------------------------------------------------- show
 function h = show(Fem,varargin)
@@ -278,7 +276,9 @@ flag = 0;
 S    = 'interp'; 
 
 switch(Request)
-    case('0'),     Z = zeros(Fem.NNode,1); colormap(Fem.ColormapOpt)
+    case('0'),     Z = zeros(Fem.NNode,1); colormap(Fem.ColormapOpt);
+    case('Mat'),   Z = Fem.materials.MatElem; 
+        colormap(Fem.materials.ColorMap); clim([0,7]);
     case('SDF'),   Z = Fem.Mesh.SDF(Fem.Mesh.Node); Z = Z(:,end);
     case('Svm'),   Z = Fem.VonMisesNodal;
     case('Sxx'),   Z = Fem.sxxNodal;
@@ -299,13 +299,12 @@ switch(Request)
     case('Uy'),    [~,Z,~]   = meshfield(Fem,Fem.states.x);
     case('Uz'),    [~,~,~,Z] = meshfield(Fem,Fem.states.x);
     case('E'),     [~,~,Z]   = MaterialField(Fem); 
-                   S = 'flat'; V = Fem.Node0; 
-                   colormap(Fem.ColormapOpt); 
+                   S = 'flat'; colormap(Fem.ColormapOpt); 
     otherwise;   flag = 1; Z = 0;
 end
 
 % ensures smooth plot
-if length(Z) == Fem.NNode
+if length(Z) == Fem.Mesh.NNode
     Z = Smoothing(Fem,Z,1); 
 end
 
@@ -321,49 +320,27 @@ cla;
 axis equal;     
 axis off; hold on; h{3} = [];
 
-if ~isempty(Fem.ColorAxis)
-   caxis(Fem.ColorAxis); 
-   colorbar;
-end
+FaceMatrix  = Fem.Mesh.geometry.ElemMat;
+BoundMatrix = Fem.Mesh.geometry.Boundary;
 
-FaceMatrix  = Fem.Mesh.get('ElemMat');
-BoundMatrix = Fem.Mesh.get('Boundary');
-
-if Fem.Dim > 2 && (strcmp(Request,'E') || strcmp(Request,'E+'))
-    Z(Z<Fem.VoidTolerance,:) = nan;
+if Fem.Dim > 2 && (strcmp(Request,'E') || strcmp(Request,'E+') ...
+        || strcmp(Request,'Mat'))
+    %Z(Z<Fem.VoidTolerance,:) = nan;
     S = 'flat';
-    Z = Fem.Mesh.get('ElementToFace')*Z;
-else
-    Alp = ones(Fem.NElem,1);
+    Z = Fem.Mesh.geometry.ElementToFace'*Z;
 end
 
 if Fem.Dim < 3
 
-    if norm(abs(Fem.Utmp)) > 1e-12
-
-        if isempty(Fem.Log)
-           [Nds] = UpdateNode(Fem, Fem.Utmp);
-%         elseif numel(Fem.Log) == 1
-%            [Nds] = UpdateNode(Fem, Fem.Utmp);
-        else
-            Nds = Fem.Log.Node{1};
-        end
-
-        %
-        h{1} = patch('Faces', FaceMatrix, 'Vertices', Nds, ...
-        'LineStyle', 'none', 'Linewidth', 1.5, 'FaceColor', [0.9, 0.9, 0.9]);
-    else
-        h{1} = patch('Faces', FaceMatrix, 'Vertices', Fem.Node0, ...
-            'LineStyle', 'none', 'Linewidth', 1.5, 'FaceColor', [0.9, 0.9, 0.9]);
-    end
-
+    h{1} = patch('Faces', FaceMatrix, 'Vertices', Fem.Mesh.Node, ...
+        'LineStyle', 'none', 'Linewidth', 1.5, 'FaceColor', 'flat');
 end
 
-h{2} = patch('Faces', FaceMatrix, 'Vertices', V, ...
-             'FaceVertexCData', Z, 'Facecolor', S, 'LineStyle', Fem.Linestyle, ...
-             'Linewidth', 1.5, 'FaceAlpha', 1, 'EdgeColor', 'k');
+h{2} = patch('Faces', FaceMatrix, 'Vertices', Fem.Mesh.Node, ...
+             'FaceVertexCData', Z, 'Facecolor', S, 'LineStyle',             ...
+             Fem.options.LineStyle,'Linewidth', 1.5, 'FaceAlpha', 1, 'EdgeColor', 'k');
 
-h{3} = patch('Faces',BoundMatrix,'Vertices',V,...
+h{3} = patch('Faces',BoundMatrix,'Vertices',Fem.Mesh.Node,...
     'LineStyle','-','Linewidth',1.5,'EdgeColor','k');
 
 if Fem.Dim == 3, 
@@ -385,23 +362,23 @@ if ~isempty(Fem.Contact) && Fem.Dim == 2
     [~,h{4}] = contourf(px,py,-D,[1e-3 1e-3],'linewidth',1.5,...
         'FaceColor',0.85*gitpage);
     
-    if (norm(Fem.fContact) > 1e-12) && Fem.QuivPlotContact
-        [Fn(:,1), Fn(:,2)] = DisplacementField(Fem,Fem.fContact);
-        [Ft(:,1), Ft(:,2)] = DisplacementField(Fem,Fem.fTangent);
-
-        Fn = Fn*1e4;
-        Ft = Ft*1e4;
-        
-        quiver(Fem.Node(:,1),Fem.Node(:,2),Fn(:,1),Fn(:,2),...
-            'AutoScale','on','Color',col(1));
-        quiver(Fem.Node(:,1),Fem.Node(:,2),Ft(:,1),Ft(:,2),...
-            'AutoScale','on','Color',col(2));
-    end
+    % if (norm(Fem.fContact) > 1e-12) && Fem.QuivPlotContact
+    %     [Fn(:,1), Fn(:,2)] = DisplacementField(Fem,Fem.fContact);
+    %     [Ft(:,1), Ft(:,2)] = DisplacementField(Fem,Fem.fTangent);
+    % 
+    %     Fn = Fn*1e4;
+    %     Ft = Ft*1e4;
+    % 
+    %     quiver(Fem.Node(:,1),Fem.Node(:,2),Fn(:,1),Fn(:,2),...
+    %         'AutoScale','on','Color',col(1));
+    %     quiver(Fem.Node(:,1),Fem.Node(:,2),Ft(:,1),Ft(:,2),...
+    %         'AutoScale','on','Color',col(2));
+    % end
 end
-
-    if ~isempty(Fem.MovieAxis)
-        axis(Fem.MovieAxis);
-    end
+    % 
+    % if ~isempty(Fem.MovieAxis)
+    %     axis(Fem.MovieAxis);
+    % end
 end
 
 if flag == 2
@@ -500,11 +477,6 @@ switch(Request)
     case('fem')
         Fem.Iteration = 1;
         Fem.Increment = 1;
-        %Fem.Node      = Fem.Node0;
-%         Fem.Support   = [];
-%         Fem.Load      = [];
-%         Fem.Spring    = [];
-%         Fem.Log       = [];
         Fem.Residual  = zeros(Fem.Dim*Fem.NNode,1);
         Fem.Utmp      = zeros(Fem.Dim*Fem.NNode,1);
         Fem.dUtmp     = zeros(Fem.Dim*Fem.NNode,1);
@@ -521,220 +493,6 @@ switch(Request)
 end
 
 Fem = SetupFiniteElement(Fem);
-
-end
-%-------------------------------------------------- NL newton-raphson solve
-function Fem = solve(Fem)
-    
-Fem.BisectCounter = 1;
-Fem.Increment     = 1;
-Fem.Iteration     = 1;
-Fem.Time          = 1e-6;
-Fem.TimeDelta     = 0;
-Fem.EndIncrement  = false;
-Fem.Convergence   = true;
-Fem.TimeStep      = Fem.TimeStep0;
-Fem.TimeDelta     = Fem.TimeEnd;
-Fem.Density       = clamp(Fem.Density,Fem.Ersatz,1);
-
-if ~Fem.SolverStartMMA
-    Fem.Log = [];    
-end
-
-% if ~isempty(Fem.Contact)
-%    Fem.PrescribedDisplacement = 1; 
-% end
-
-if Fem.ShowProcess
-    showInformation(Fem,'NonlinearFem');
-end
-
-if Fem.SolverPlot || (Fem.SolverStartMMA && Fem.SolverPlot)
-    figure(101); 
-    Fem.show('0');
-    clf;
-    background(metropolis);
-end
-
-if norm(Fem.Utmp) == 0
-    Fem.Utmp  = zeros(Fem.Dim*Fem.NNode,1);
-    Fem.Node  = Fem.Node0;
-else
-    % update mesh class
-    Fem.GravityRamp = false;
-    Fem.Node    = UpdateNode(Fem,Fem.Utmp);
-    Fem.Center  = UpdateCenter(Fem);
-end
-
-while true 
-    
-    [Fem, Terminate] = SolverTimer(Fem);
-    if Terminate, break; end
-        
-    flag           = 0;
-    Singular       = false;
-    Fem.Divergence = 0;
-        
-    % load increment
-    Fem.LoadingFactor = sigmoid(Fem.Time+1e-3,Fem.SigmoidFactor);
-    
-    % reset iteration
-    Fem.Iteration = 1;
-    Fem.SecantStiffness = [];
-        
-    while flag == 0
-       
-        % get free DOFs
-        FreeDofs = GetFreeDofs(Fem);
-        
-        % assemble global system matrices
-        Fem = AssembleGlobalSystem(Fem);
-        
-        % assemble force/boundary conditions
-        Fem = AssembleBoundaryConditions(Fem);
-       
-        % compute residual and tangent stiffness
-        if Fem.Nonlinear
-            A = Fem.TangentStiffness(FreeDofs,FreeDofs);
-
-            if ~isempty(Fem.SecantStiffness) && Fem.Iteration > 2 && ...
-                    Fem.Increment > 1
-                
-                A = Fem.SecantStiffness;
-            end
-
-            b = Fem.Residual(FreeDofs);                      
-        elseif ~Fem.Nonlinear
-            A = Fem.Stiffness(FreeDofs,FreeDofs);
-            b = sparse(Fem.fExternal(FreeDofs) + Fem.fInput(FreeDofs));
-        end
-         
-        Delta = Fem.Utmp;
-        
-        % matrix decomposition
-        %A = decomposition(A,'lu');
-        
-        if Fem.SolverStartMMA
-            DeltaU = A\(b); % topology optimization needs exact mid-solution
-        else
-            if ~Fem.PrescribedDisplacement %|| ~isempty(Fem.Contact)
-                [L,D,P] = ldl(A,'vector');
-                
-                if min(full(diag(D)))<Fem.ResidualNorm
-                    eta = 1e-14;
-                    diagD = full(diag(D));
-                    idnegative = find(diagD<eta);
-                    diagD(idnegative) = eta - diagD(idnegative);
-                    D = spdiags(diagD,0,length(diagD),length(diagD));
-                end
-                
-                DeltaU = sparse(P,1,(L'\(D\(L\b(P))))); % thanks Ondrej ;)
-             else
-                DeltaU = A\b; % displace needs exact mid-solution
-             end
-        end
-            
-        if Fem.Nonlinear
-            Delta(FreeDofs,1) = Delta(FreeDofs,1)-(DeltaU(:,1));
-        else
-            Delta(FreeDofs,1) = DeltaU(:,1); 
-            b = Fem.ResidualNorm; 
-        end
-        
-        
-%         if true
-%           M  = Fem.MassMatrix(FreeDofs,FreeDofs);
-%           [Q,~] = eigs(M,A,10);
-%           Uproj = Delta;
-%           for ii = 1:10
-%               Uproj(FreeDofs,1) = Uproj(FreeDofs,1) + ...
-%                   dot(Q(:,ii),Delta(FreeDofs,1)) * Q(:,ii);
-%           end
-%           
-%           Delta = Uproj;
-%           
-%         end
-        
-        % evaluate convergence criteria
-        Fem.SolverResidual = vappend(Fem.SolverResidual,...
-            norm(b));
-        
-        Fem.SolverVonMises = vappend(Fem.SolverVonMises,...
-            max(Fem.s(:,1)));
-        
-        Fem.SolverDisplace = vappend(Fem.SolverDisplace,...
-            max(DeltaU(:,1)));
-        
-        % check convergence
-        [flag,Fem] = CheckConvergence(Fem,Singular); 
-        
-        % add iteration
-        Fem.Iteration = Fem.Iteration + 1;
-
-%         if isempty(Fem.SecantStiffness)
-%             Fem.SecantStiffness = A;
-%         else
-%             As = Fem.SecantStiffness;
-%             dR = b - Fem.Ftmp;
-%             dU = -DeltaU;
-%             Ks = ((dR - As*dU) * dU.')/(norm(dU)^2);
-%             Fem.SecantStiffness = As - Ks;
-%         en
-
-%         if isempty(Fem.SecantStiffness)
-%             Fem.SecantStiffness = A;
-%         else
-%             %Fem.Utmp = Delta;
-%             %Fem = AssembleGlobalSystem(Fem);
-%             %b  = Fem.Residual(FreeDofs); 
-%             As = Fem.SecantStiffness;
-%             dY = b - Fem.Ftmp;
-%             dS = -DeltaU;
-%             
-%             Ks = (dY * dY.')/(dY.'*dS) ...
-%                  - (As * dS * (As * dS).' )/(dS.' * As * dS);
-%             
-%             Fem.SecantStiffness = As - Ks;
-%         end
-
-        % update mesh 
-        if flag == 0 && Fem.Nonlinear
-            Fem.Utmp = Delta;
-            Fem.Ftmp = b;
-        elseif flag == 1 && ~Fem.Nonlinear
-            Fem.Utmp   = Delta;
-            Fem.Node   = UpdateNode(Fem,Delta);
-            Fem.Center = UpdateCenter(Fem);
-        elseif flag == 1 && Fem.Nonlinear
-            
-            if ~isempty(Fem.ParasiticStates)
-                Delta = Delta + Fem.ParasiticStates;
-            end
-            
-            Fem.Utmp  = Delta;
-            Fem.Ftmp  = b;
-            Fem.Node  = UpdateNode(Fem,Delta);
-            Fem.Center = UpdateCenter(Fem);
-        end
-        
-        % update mesh class
-        Fem.Mesh = Fem.Mesh.set('Node',Fem.Node);
-        Fem.Mesh = Fem.Mesh.set('Center',Fem.Center);
-    end 
-    
-    if ~Fem.SolverStartMMA
-        Fem = FiniteElementDataLog(Fem);
-    end
-    
-    if Fem.SolverPlot || (Fem.SolverStartMMA && Fem.SolverPlot)
-        Fem.show(Fem.SolverPlotType); 
-        drawnow;
-    end
-    
-    if ~Fem.Nonlinear || Fem.Time >= 1
-        break; 
-    end
-end
 
 end
 %-------------------------------------------- NL dynamic newmark-beta solve
@@ -1021,93 +779,18 @@ end
 %-------------------------------------------------- compute system matrices
 function Fem = compute(Fem,varargin)
     
-% %get free-dofs    
-% dofa = Fem.system.FreeDofs;
-% % Fem.solver.sol.x  = zeros(Fem.Dim*Fem.Mesh.NNode,1);
-% % Fem.solver.sol.dx = zeros(Fem.Dim*Fem.Mesh.NNode,1);
-% 
-% if isempty(varargin)
-%     Q  = Fem.states.x;
-%     dQ = Fem.states.dx;
-% elseif numel(varargin) == 1
-%     Q  = varargin{1};
-%     dQ = 0*varargin{1};
-% else
-%     Q  = varargin{1};
-%     dQ = varargin{2};
-% end
-% 
-% if size(Q,1) == numel(dofa)
-%     Fem.states.x(dofa)  = Q; 
-%     Fem.states.dx(dofa) = dQ;
-% else
-%     Fem.states.x(:)  = Q; 
-%     Fem.states.dx(:) = dQ;
-% end
+if isempty(varargin)
+    Build = true;
+else
+    Build = false;
+end
 
-Fem = assembleGlobalFem(Fem,1);
+Fem = assembleGlobalFem(Fem,Build);
 Fem = assembleBoundaryFem(Fem);
 
-Fem.system.fResidual = Fem.system.fElastic - ...
-    Fem.system.fInput - ...
-    Fem.system.fBody;
+Fem.system.fResidual = Fem.system.fElastic + Fem.system.fDamping ... 
+    - Fem.system.fInput - Fem.system.fBody - Fem.system.fContact;
 
-end
-%------------------------------------------- reconstruct from sample points
-function [P] = reconstruct(Fem,varargin)
-
-PS1 = varargin{1};
-PS2 = Fem.Mesh.Center;
-PS3 = Fem.Mesh.Node;
-Nsp = size(PS1,1);
-Shp = Fem.Mesh.ShapeFnc;
-
-d = cell(Nsp,1);    
-
-% get closest neighbors with element centers
-I = knnsearch(PS1,PS2);
-
-for ii = 1:Nsp
-   el = Fem.Mesh.Element{I(ii)};
-   Vsp = PS3(el,:);  % points spanned by element
-   Vin = PS1(ii,:);  % point in element
-   
-   % compute shape function jacobian transformation
-   J0 = Vsp.'*Shp{numel(el)}.dNdxi(:,:,1);
-   
-   V1 = ((J0)\Vsp.').';     % transform elements to reference config.
-   dv = mean(V1,1);
-   V1 = V1 - dv;            % pull to origin
-   V2 = ((J0)\Vin.').'- dv; % transform linepoint to reference config.
-
-   % recover angle
-   th = atan2(V2(2),-V2(1));
-   r  = sqrt(dot(V2,V2));
-   
-   L = [0,0; r*cos(pi+th),-r*sin(pi+th)]; % draw line to point 
-   P = [V1;V1(1,:)];   
-   [xc, yc] = intersections(P(:,1),P(:,2),L(:,1),L(:,2)); 
-   
-   if isempty(xc) % outside element
-    N = Shp{numel(el)}.fnc(r*[cos(th),sin(th)]);
-   else % inside element    
-    % find line intersection on boundary of element
-    N = Shp{numel(el)}.fnc([-xc,yc]);   
-   end
-   
-   % assemble distance filter matrix based on ShpFnc
-   if numel(el) == 3
-    d{ii} = [repmat(ii,numel(el),1),[el(2);el(1);el(3)],(N)];
-   else
-    d{ii} = [repmat(ii,numel(el),1),[el(end-1:-1:1).';el(end)],(N)];   
-   end
-   
-end
-
-d = cell2mat(d); 
-
-P = sparse(d(:,1),d(:,2),d(:,3),Nsp,Fem.Mesh.NNode);
-P = spdiags(1./sum(P,2),0,size(P,1),size(P,1))*P;
 end
 %--------------------------------------------------------------- find nodes
 function NodeList = findNodes(Fem,varargin)
@@ -1119,19 +802,33 @@ function ElementList = findElements(Fem,varargin)
 end
 %------------------------------------------------------------ find elements
 function NodeList = findEdges(Fem,varargin)
-    NodeList = FindEdge(Fem.Mesh,varargin{1:end});
+    NodeList = findEdgeMesh(Fem.Mesh,varargin{1:end});
 end
 %------------------------------------------------------------- add material
 function Fem = addMaterial(Fem,Material)
-
+    
+    if isempty(Fem.materials.MatElem)
+        Fem.materials.Material = {Material};
+        Fem.materials.MatElem = ones(Fem.Mesh.NElem,1);
+    else
+        Fem.materials.Material{end+1} = Material;
+    end
+    Fem.materials.NMat = Fem.materials.NMat + 1;
 end
 %------------------------------------------------------------- add material
 function Fem = setMaterial(Fem,varargin)
 
     if isa(varargin{1},'char')
-        varargin{1} = findNodeMesh(Fem.Mesh.Node,varargin{1});
+        E = findNodeMesh(Fem.Mesh.Center,varargin{1});
+    else
+        E = varargin{1};
     end
 
+    assert(varargin{2} <= Fem.materials.NMat, ['Assigned material Id',...
+        ' exceeds the list of materials']);
+    assert(max(E) <= Fem.Mesh.NElem, ['Assigned material Id',...
+        ' exceeds the number of elements']);
+    Fem.materials.MatElem(E) = varargin{2};
     
 end
 %------------------------------------------------------------- add supports
@@ -1148,7 +845,8 @@ function Fem = addLoad(Fem,varargin)
     if isa(varargin{1},'char')
         varargin{1} = findNodeMesh(Fem.Mesh.Node,varargin{1});
     end
-    Fem = addConstraintFem(Fem,'Load',varargin{1:end});
+    %Fem = addConstraintFem(Fem,'Load',varargin{1:end});
+    Fem = addLoadFem(Fem,varargin{1:end});
 end
 %---------------------------------------------------------------- add loads
 function Fem = addSpring(Fem,varargin)
@@ -1166,7 +864,7 @@ function Fem = addDisplace(Fem,varargin)
  if isa(varargin{1},'char')
      varargin{1} = findNodeMesh(Fem.Mesh.Node,varargin{1});
  end   
- Fem = addConstraintFem(Fem,'Displace',varargin{1:end});
+ Fem = addDisplaceFem(Fem,varargin{1:end});
 end
 %-------------------------------------------------------------- add gravity
 function Fem = addGravity(Fem,varargin)
@@ -1177,16 +875,16 @@ function Fem = addGravity(Fem,varargin)
         varargin{1} = [0,0,-9.81e3].'; 
     end
  end
- Fem = AddConstraint(Fem,'Gravity',[],varargin{1:end});
+ Fem = addGravityFem(Fem,[],varargin{1:end});
 end
 %-------------------------------------------------------- add pressure load
 function Fem = addPressure(Fem,varargin)
  if isa(varargin{1},'char')
-     varargin{1} = Fem.FindEdges(varargin{1});
+     varargin{1} = Fem.Mesh.findEdges(varargin{1});
  elseif isempty(varargin{1})
-     varargin{1} = Fem.FindEdges('Hole');
+     varargin{1} = Fem.Mesh.findEdges('Hole');
  end   
- Fem = AddConstraint(Fem,'Pressure',varargin{1:end});
+ Fem = addPressureFem(Fem,varargin{1:end});
 end
 %------------------------------------------ add myocyte muscle activiation
 function Fem = addMyocyte(Fem,varargin)
@@ -1198,7 +896,10 @@ function Fem = addContraction(Fem,varargin)
 end
 %-------------------------------------- add tendon force or follower force
 function Fem = addTendon(Fem,varargin)
- Fem = AddConstraint(Fem,'Tendon',varargin{1:end});
+    if isa(varargin{1},'char')
+        varargin{1} = findNodeMesh(Fem.Mesh.Node,varargin{1});
+    end
+    Fem = addConstraintFem(Fem,'Tendon',varargin{1:end});
 end
 %------------------------------------------------ add contact SDF function
 function Fem = addContact(Fem,varargin)
@@ -1208,13 +909,14 @@ function Fem = addContact(Fem,varargin)
      B1 = box2node(sdf.BdBox); 
      B2 = box2node(Fem.BdBox);
      Fem.BdBox = boxhull([B1;B2],mean(abs(Fem.BdBox))/1e1);
+     Fem.system.ContactSDF = sdf;
  end
     
  if numel(varargin) < 2
      varargin{2} = [0,0]; 
  end
  
- Fem = AddConstraint(Fem,'Contact',varargin{1:end});
+ Fem = addContactFem(Fem,varargin{1:end});
 end
 %------------------------------------------------- add output list for LOG
 function Fem = addOutput(Fem,varargin)
@@ -1300,28 +1002,6 @@ function msh = exportMesh(Fem,varargin)
     msh = msh.generate();
    
 end
-%-------------------------------------------------- show STL reconstruction
-function obj = showSTL(Fem,value)
-    
-V = Fem.Topology;
-X = Fem.TopologyGridX; 
-Y = Fem.TopologyGridY; 
-Z = Fem.TopologyGridZ; 
-
-[faces,vertices] = MarchingCubes(X,Y,Z,V,value);
-
-figure(101);
-cla;
-obj = Gmodel(vertices,faces);
-obj.Texture = grey;
-
-obj = obj.bake();
-obj = Blender(obj,'Rotate',{'x',90});
-obj.render();
-axis equal
-axis off;
-
-end
 %----------------------------------------------------------- initial design
 function Fem = initialTopology(Fem,varargin)
     if strcmp(varargin{1},'Equidistance')
@@ -1349,15 +1029,6 @@ function Fem = initialTopology(Fem,varargin)
 end
 %----------------------------------------------------- form smooth topology
 function Fem = former(Fem)
-%     
-% if Fem.SolverStartMMA && ~Fem.MovieStart
-%     Res = 300;
-%     Thickness = 0.2*(Fem.BdBox(2)-Fem.BdBox(1));
-% else
-%     Res = 300;
-%     Thickness = 0.2*(Fem.BdBox(2)-Fem.BdBox(1));
-% end
-
 Res = 300;
 Thickness = 0.2*(Fem.BdBox(2)-Fem.BdBox(1));
 Layers = 40;
@@ -1657,19 +1328,7 @@ Fem.triplets.s  = zeros(Fem.Mesh.NNode,6);
 Fem.triplets.s  = zeros(Fem.Mesh.NNode,3);
 Fem.triplets.l  = zeros(Fem.Mesh.NNode,1); 
 
-% Fem.Potential  = 0;
-% Fem.PotentialG = 0;
-% Fem.PotentialF = 0;
-% Fem.Kinetic    = 0;
 end
-
-% switch Fem.Solver
-%     case('Basic');    Fem.SolverId = 1; % mrdivide
-%     case('mr');       Fem.SolverId = 1; % mrdivide
-%     case('lu');       Fem.SolverId = 2; % LU-decomp min eig-value   
-%     case('gmres');    Fem.SolverId = 3; % Generalized Minimum Residual           
-%     otherwise;        Fem.SolverId = 1;
-% end
 
 end
 %------------------------ assemble prescribed boundary forces/displacements

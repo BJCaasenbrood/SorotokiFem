@@ -1,0 +1,98 @@
+function Fem = solveQuasiStaticFem(Fem, varargin)
+
+Ceq = [];
+qc  = [];    
+nc  = 0;
+qa  = Fem.system.Ia;
+nq  = numel(find(Fem.system.Ia));
+
+if isfield(Fem.system,'Displace')
+    Fem = Fem.compute();
+    qc  = Fem.system.Ic;
+    nc  = numel(find(Fem.system.Ic));
+    Ceq = Fem.system.cMatrix;
+end
+
+Fem.solver.Time  = 0;
+
+while Fem.solver.Time < Fem.solver.TimeHorizon
+
+    beta = Fem.solver.Time / Fem.solver.TimeHorizon;
+    Fem.options.loadingFactor = beta;
+
+    Fem.solver.Residual  = Inf;
+    Fem.solver.Iteration = 1;
+
+    x0 = Fem.solver.sol.x(qa);
+    u0 = Fem.solver.sol.u(qc);
+
+    while norm(Fem.solver.Residual) > Fem.solver.RelTolerance && ...
+        Fem.solver.Iteration < Fem.solver.MaxIteration 
+
+        Fem = Fem.compute();
+
+        % linear solve
+        if isempty(Ceq)
+            b = Fem.system.fResidual;
+            A = Fem.system.Tangent;
+        else
+            b = [Fem.system.fResidual + Ceq.'*Fem.solver.sol.u(qc); ...
+                 -Fem.system.cResidual];
+         
+            A = [Fem.system.Tangent, Ceq.'; Ceq, zeros(nc)];
+        end
+
+        dfdq1 = A \ b;
+
+        if Fem.solver.Iteration > 1
+            minL = sqrt(1+th) * lam0;
+            maxL = 0.5 * norm([x1;u1] - [x0;u0])/norm(dfdq1 - dfdq0);
+            lam1 = clamp(min([minL, maxL]),1,1);
+            th   = lam1/lam0;
+        else
+            lam0 = 1;
+            lam1 = lam0;
+            th   = +Inf;
+        end
+
+        Fem.solver.Residual  = b;
+        Fem.solver.Iteration = Fem.solver.Iteration + 1;
+
+        dfdq0 = dfdq1;
+        x0 = Fem.solver.sol.x(qa);
+        x1 = Fem.solver.sol.x(qa) - lam1 * dfdq1(1:nq);
+
+        u0 = Fem.solver.sol.u(qc);
+        u1 = Fem.solver.sol.u(qc) - lam1 * dfdq1(nq+(1:nc));
+
+        Fem.solver.sol.u(qc) = u1;
+        Fem.solver.sol.x(qa) = x1;
+        lam0 = lam1;
+
+        log(Fem.solver.Time + 1e-6, ...
+            Fem.solver.Iteration,...
+            norm(b),...
+            lam1 + 1e-6);
+    end
+
+    Fem.solver.Time = clamp(Fem.solver.Time + Fem.solver.TimeStep,...
+        0,Fem.solver.TimeHorizon);
+    % Fem.states.x(qa) = Fem.solver.sol.x(qa);
+
+    if ~isempty(Fem.options.Display)
+        Fem.options.Display(Fem);
+        drawnow;
+    end
+end
+
+end
+
+function log(ii,jj,f,g)
+    if ii < 1e-3 
+        fprinttable({'time', 'step','force residual','lambda'}, [ii, jj, f,g],'open',true);
+    else
+        fprinttable({'time', 'step', 'force residual','lambda'}, [ii, jj, f,g], 'addrow',true,'open',true);
+    end
+    pause(.0);
+end
+

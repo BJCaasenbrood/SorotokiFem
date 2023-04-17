@@ -21,7 +21,7 @@ classdef femoptions
             obj.Dimension = 2;
             obj.Color               = [0.8329 0.8329 0.8329];
             obj.ColorMap            = cmap_turbo;
-            obj.Display             = true;
+            obj.Display             = @plt;
             obj.ColorMap            = cmap_turbo;
             obj.ColorAxis           = [];
             obj.LineStyle           = '-';
@@ -33,3 +33,8 @@ classdef femoptions
     end
 end
 
+function plt(Fem)
+    h = Fem.Mesh;
+    h.Node = Fem.Mesh.Node + meshfield(Fem, Fem.solver.sol.x);
+    h.show();
+end

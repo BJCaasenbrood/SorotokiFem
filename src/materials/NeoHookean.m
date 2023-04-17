@@ -71,11 +71,11 @@ function varargout = get(NeoHookean,varargin)
 end   
 %---------------------------------------------------------------------- get     
 function y = getModulus(NeoHookeanMaterial)
-y = NeoHookeanMaterial.E;
+y = NeoHookeanMaterial.params.E;
 end
 %---------------------------------------------------------------------- get     
 function y = getContactReaction(NeoHookean)
-y = NeoHookean.ContactNormalReaction*...
+y = NeoHookean.contact.NormalReaction*...
     getModulus(NeoHookean);
 end
 %---------------------------------------------------------------------- get     
