@@ -54,8 +54,8 @@ function obj = NeoHookean(varargin)
     obj.params.Zeta   = 0.4;
 
     obj.contact.NormalDamping   = 0.05;
-    obj.contact.NormalReaction  = 0.1;
-    obj.contact.TangentFriction = 0.1;
+    obj.contact.NormalReaction  = 0.5;
+    obj.contact.TangentFriction = 0.3;
 
 end
 %---------------------------------------------------------------------- get     
@@ -80,7 +80,7 @@ y = NeoHookean.contact.NormalReaction*...
 end
 %---------------------------------------------------------------------- get     
 function y = getContactFriction(NeoHookean)
-y = NeoHookean.ContactTangentFriction;
+y = NeoHookean.contact.TangentFriction;
 end
 %---------------------------------------------------------------------- get     
 function y = getContactDamping(NeoHookean)

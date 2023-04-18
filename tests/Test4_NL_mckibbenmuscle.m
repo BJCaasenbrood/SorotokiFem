@@ -6,7 +6,7 @@
 
 clf;
 s = sRectangle(-5,5,0,40);
-msh = Mesh(s,'Quads',[10,20]);
+msh = Mesh(s,'Quads',[20,50]);
 msh = msh.generate();
 
 E = msh.findElements('Box',[-3,3,4,36]);

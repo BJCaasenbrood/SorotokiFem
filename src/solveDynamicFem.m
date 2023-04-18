@@ -1,4 +1,6 @@
 function Fem = solveDynamicsFem(Fem, varargin)
+
+h      = [];
 rho    = 0;
 alphaM = (2*rho - 1)/(rho + 1);
 alphaF = (rho)/(rho + 1);
@@ -7,7 +9,11 @@ gamma = 0.5 - alphaM + alphaF;
 beta  = 0.25*(1 - alphaM + alphaF)^2;
 
 Fem.solver.Time = 0;
-qa = Fem.system.Ia;
+if ~isfield(Fem.system,'Ia')
+    Fem.system.Ia = 1:Fem.Dim * Fem.Mesh.NNode;
+end
+
+qa = Fem.system.Ia; 
 
 if ~isfield(Fem.solver.sol,'ddx')
 

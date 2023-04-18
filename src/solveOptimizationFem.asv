@@ -1,6 +1,5 @@
 function Fem = solveOptimizationFem(Fem, varargin)
 
-Hmax = Fem.topology.MaxChange;
 xmin = zeros(Fem.Mesh.NElem,1);
 xmax = ones(Fem.Mesh.NElem,1);
 upper = xmax;
@@ -11,7 +10,7 @@ C    = 10000;
 D    = 0;
 
 %Fem.solver.Time = 0;
-%qa = Fem.system.Ia;
+qa = Fem.system.Ia;
 
 assert(Fem.materials.NMat == 1, 'Currently, single material optimization is only supported.');
 
@@ -40,28 +39,20 @@ while Fem.topology.Iteration < Fem.topology.MaxIteration
         dfdz = Filter'*(dEdy.*dfdE + dVdy.*dfdV);
         dgdz = Filter'*(dEdy.*dgdE + dVdy.*dgdV);
         
-        if Fem.topology.Iteration > 1, x1 = x1; else,  x1 = 0; end
-        if Fem.topology.Iteration > 2, x2 = x2; else,  x2 = 0; end
+        if Fem.topology.Iteration < 2, x1 = 0; end
+        if Fem.topology.Iteration < 3, x2 = 0; end
         
         [xmma,~,~,~,~,~,~,~,~,lower,upper] = ...
-            mmasub(1,Fem.Mesh.NElem,Fem.topology.Iteration,...
-            x0,xmin,xmax,x1,x2,...
+            mmasub(M,N,iter,x0,xmin,xmax,x1,x2,...
             f,dfdz,0*dfdz,g,dgdz,0*dgdz,...
             lower,upper,A0,A,C,D);
 
-        if Fem.topology.Iteration >= 1, x1 = x0; end
-        if Fem.topology.Iteration >= 2, x2 = x1; end
-        x0 = x0 + clamp(xmma-x0,-Hmax,Hmax);
+        %dx = xmma - x0;
+        dx = clamp(xmma-x0,-Fem.ChangeMax,Fem.ChangeMax);
+        x0 = x0 + dx;
 
-        Fem.topology.sol.x     = x0;
+        Fem.topology.sol.x    = x0;
         Fem.topology.Iteration = Fem.topology.Iteration + 1;
-        Fem.topology.Penal = clamp(Fem.topology.Penal +  ...
-            Fem.topology.PenalStep, 0, Fem.topology.MaxPenal);
-
-        if ~isempty(Fem.options.Display)
-            Fem.options.Display(Fem);
-            drawnow;
-        end
 end
 end
 

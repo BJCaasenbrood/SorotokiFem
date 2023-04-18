@@ -37,4 +37,5 @@ function plt(Fem)
     h = Fem.Mesh;
     h.Node = Fem.Mesh.Node + meshfield(Fem, Fem.solver.sol.x);
     h.show();
+    axis(boxhull(h.Node));
 end

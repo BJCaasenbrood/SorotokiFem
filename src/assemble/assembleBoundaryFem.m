@@ -31,7 +31,9 @@ end
 
 % adding contact loads
 if isfield(Fem.system,'Contact') && ~Fem.options.isPrescribed
-    Fnc = assembleContactForces(Fem);
+    [Fnc, Ftc, Knc, Ktc] = assembleContactForces(Fem);
+    Fem.system.Tangent = Fem.system.Tangent ... 
+        + Knc(qa,qa) + Ktc(qa,qa);
 end
 
 % adding contact loads

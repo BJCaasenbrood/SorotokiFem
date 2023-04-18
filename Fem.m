@@ -221,16 +221,16 @@ function obj = Fem(Mesh,varargin)
         obj.options.LineStyle = 'none';
     end
     
-    obj.materials              = materiallist;
-    obj.topology.sol.x         = ones(obj.Mesh.NElem,1);
-    obj.topology.VolumeInfill  = 1;
-    obj.topology.Thickness     = 1;
+    obj.materials      = materiallist;
+    obj.topology.sol.x = ones(obj.Mesh.NElem,1);
     
     for ii = 1:2:length(varargin)
         if isprop(obj.options,varargin{ii})
             obj.options.(varargin{ii}) = varargin{ii+1};
         elseif isprop(obj.solver,varargin{ii})
             obj.solver.(varargin{ii}) = varargin{ii+1};
+        elseif isprop(obj.topology,varargin{ii})
+            obj.topology.(varargin{ii}) = varargin{ii+1};
         else
             obj.(varargin{ii}) = varargin{ii+1};
         end
@@ -785,7 +785,7 @@ else
     Build = false;
 end
 
-Fem = assembleGlobalFem(Fem,Build);
+Fem = assembleGlobalFem(Fem);
 Fem = assembleBoundaryFem(Fem);
 
 Fem.system.fResidual = Fem.system.fElastic + Fem.system.fDamping ... 
@@ -854,10 +854,6 @@ function Fem = addSpring(Fem,varargin)
      varargin{1} = Fem.FindNodes(varargin{1});
  end   
  Fem = AddConstraint(Fem,'Spring',varargin{1:end});
-end
-%---------------------------------------------------------------- add loads
-function Fem = addSource(Fem,varargin)
- Fem = AddConstraint(Fem,'Source',varargin{1:end});
 end
 %--------------------------------------------------------- add displacement
 function Fem = addDisplace(Fem,varargin)
@@ -2050,109 +2046,6 @@ end
 % A = eye(2*n) - alpha*dt*F;
 % 
 % end
-%------------------------------------------------------ isotropic reduction
-function [flag, Fem] = CheckConvergence(Fem,SingularKt)
-
-CriteriaResidual = (Fem.SolverResidual(end) > Fem.ResidualNorm);
-
-DiffSVM = abs(Fem.SolverVonMises(end-1)/Fem.SolverVonMises(end) - 1);
-
-CriteriaStress = (DiffSVM > Fem.StressNorm);
-
-Criteria = CriteriaResidual && CriteriaStress; %&& CriteriaDisplace;
-
-if Fem.SolverResidual(end,1) > Fem.SolverResidual(end-1,1)
-   Fem.Divergence = Fem.Divergence + 1;
-end
- 
-if Criteria && (Fem.Iteration <= Fem.MaxIteration) && ~SingularKt && ...
-         Fem.Divergence <= Fem.BisectLimit || Fem.Iteration == 1
-    flag = 0;
-else
-    if (Fem.Iteration > Fem.MaxIteration) || SingularKt %|| ...
-            %Fem.SolverResidual(end) > (25*Fem.Material.getModulus)
-        flag = 2; 
-        Fem.Convergence = false;
-        Fem.Utmp = Fem.U;
-    
-    elseif (Fem.Divergence >= Fem.BisectLimit)
-        flag = 2;        
-        Fem.Utmp = Fem.U;
-        Fem.Convergence = false;
-    else
-        flag = 1;
-        Fem.Convergence = true;
-    end
-    if round((100*Fem.Iteration/Fem.MaxIteration)) > 75 && ~Fem.SolverStartMMA
-        Fem.MaxIteration = round(Fem.MaxIteration)*1.25;
-    end
-end
-
-if Fem.ShowProcess
-    ProcessMonitor(Fem);
-end
-
-end
-%--------------------------------------------------- numerical solver timer
-function [Fem, Terminate] = SolverTimer(Fem)
-    
-Terminate = false;
-if ~Fem.Nonlinear, Fem.Time = 1 - 0.5*Fem.TimeStep;  end
-    
-if Fem.Convergence
-    
-    if Fem.Time > Fem.TimeEnd - eps
-        Terminate = true;
-        return;
-    end
-    
-    Fem.U = Fem.Utmp;
-    if Fem.Time + Fem.TimeStep > Fem.TimeEnd  && ~Fem.EndIncrement ...
-            && Fem.Time ~= Fem.TimeEnd
-        Fem.TimeStep = Fem.TimeEnd-Fem.Time;
-        Fem.EndIncrement = true;
-    end
-    
-    Fem.Time = Fem.Time + Fem.TimeStep;
-    
-elseif ~Fem.Convergence
-    
-    if Fem.BisectCounter == 1 && Fem.SolverId ~= 3
-        Fem.SolverId = 3;
-        if ~Fem.SolverStartMMA
-        fprintf('------------------------------------------------------------|\n');
-        fprintf(' Switching solver -> Generalized Min. Residual Method       |\n');
-        fprintf('------------------------------------------------------------|\n');
-        end
-        Fem.BisectCounter = Fem.BisectCounter + 1;
-        return;
-    end
-    
-    Fem.Utmp = Fem.U;
-    Fem.TimeStep = clamp(Fem.TimeStep/2,Fem.TimeStepMin,1);
-    Fem.Time = clamp(Fem.Time - Fem.TimeStep,0,1);
-    Fem.BisectCounter = Fem.BisectCounter + 1;
-    fprintf('------------------------------------------------------------|\n');
-    if ~Fem.SolverStartMMA
-    Fem.MaxIteration = Fem.MaxIteration + 15;
-    fprintf(' Bisection                                                  |\n');
-    fprintf('------------------------------------------------------------|\n');
-    end
-    
-    if Fem.BisectCounter > Fem.BisectLimit
-        Terminate = true;
-    end
-end
-
-if ~Fem.SolverStart, Fem.Increment = 1; Fem.SolverStart = true;
-else, Fem.Increment = Fem.Increment + 1;
-end
-
-if (Fem.SolverStartMMA && Terminate)||(Fem.SolverStartMMA && ~Fem.Nonlinear)
-    %ProcessMonitor(Fem); 
-end
-
-end
 %-------------------------------------------------- solver logging function
 function Fem = FiniteElementDataLog(Fem)
         
@@ -2357,75 +2250,6 @@ for ii=1:naver
     f = W*double(f(:));
 end
 
-end
-%----------------------------------------------------------- mesh smoothing
-function [Node,Node0] = UpdateNode(Fem,U)
-    Node0 = Fem.get('Node0'); 
-    Ntmp = Node0;
-
-    u = FieldOperator(Fem,U);
-
-    Ntmp(:,1) = Node0(:,1) + u(:,1);
-    Ntmp(:,2) = Node0(:,2) + u(:,2);
-    
-    if Fem.Dim == 3
-        Ntmp(:,3) = Node0(:,3) + u(:,3); 
-    end
-
-    Node = Ntmp;
-
-    function u = FieldOperator(Fem,U)
-        u  = zeros(Fem.NNode,Fem.Dim);
-        
-        for node = 1:Fem.NNode
-            u(node,1) = U(Fem.Dim*node + (1-Fem.Dim),1);
-            u(node,2) = U(Fem.Dim*node + (2-Fem.Dim),1);
-            
-            if Fem.Dim == 3
-                u(node,3) = U(Fem.Dim*node,1);
-            end
-        end
-    end
-end
-%----------------------------------------------------------- mesh smoothing
-function Fem = UpdateSE3(Fem,U)
-    
-list = 1:Fem.NElem;
-F2V  = Fem.Mesh.FaceToNode;
-
-% for eacth element 
-for ii = 1:Fem.NNode
-    Rtmp = 0;
-    Qtmp = 0;
-    ElemFromNode = list(F2V(:,ii) > 0);
-    
-    for jj = ElemFromNode
-        Qtmp = Qtmp + Fem.ElemStr{jj};
-        Rtmp = Rtmp + Fem.ElemRot{jj};
-    end
-    
-    [Ur,~,Vr] = svd(Rtmp);
-    R{ii} = (Ur*Vr.');
-    Q{ii} = Qtmp/numel(ElemFromNode);
-end
-
-Fem.Node     = UpdateNode(Fem,U);
-Fem.Rotation = R;
-Fem.Stretch  = R;
-
-end
-%---------------------------------------------- compute Hessian approximate
-function z = UpdateAuxiliaryFlow(Fem)
-z = Fem.Log.AUX.z;
-
-% first EL-diff eval
-f1 = Fem.Flow(Fem); 
-
-Fem.Log.AUX.z = z + (2/3)*Fem.TimeStep*f1;
-f2 = Fem.Flow(Fem);
-
-% update integrands
-z = z + 0.25*Fem.TimeStep*(f1 + 3*f2);
 end
 
 %%/////////////////////////////////////////////////// TOPOLOGY OPTIMIZATION

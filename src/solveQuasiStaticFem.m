@@ -13,7 +13,12 @@ if isfield(Fem.system,'Displace')
     Ceq = Fem.system.cMatrix;
 end
 
-Fem.solver.Time  = 0;
+if Fem.options.isNonlinear
+    Fem.solver.Time  = Fem.solver.TimeStep;
+else
+    Fem.solver.Time = Fem.solver.TimeHorizon - 1e-12;
+    Fem.solver.MaxIteration = 2;
+end
 
 while Fem.solver.Time < Fem.solver.TimeHorizon
 
@@ -84,6 +89,8 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         drawnow;
     end
 end
+
+fprintf('\n');
 
 end
 

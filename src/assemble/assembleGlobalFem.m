@@ -23,15 +23,16 @@ beta    = Fem.options.loadingFactor;
 [E,~,V] = materialFieldFem(Fem);
 
 Fem.system.Potential = 0;
-% Fem.PotentialG = 0;
 
 index    = 0; 
 subindex = 0;
 
 
-if (~Fem.options.isAssembled && ~Fem.options.isNonlinear) ...
-        || Fem.options.isNonlinear || ForceBuild
-    
+% if (~Fem.options.isAssembled && ~Fem.options.isNonlinear) ...
+%         || Fem.options.isNonlinear || ForceBuild
+
+if (~Fem.options.isAssembled && ~Fem.options.isNonlinear) || Fem.options.isNonlinear
+
 for el = 1:Fem.Mesh.NElem
    
     NDof = Fem.Mesh.ElemNDof(el);
@@ -141,11 +142,11 @@ for el = 1:Fem.Mesh.NElem
     subindex = subindex + NDof/Fem.Dim;
 end
 
+    %Fem = assembleDeformationGrad(Fem);
+
 end
 
 Fem = assembleInternalForces(Fem);
-Fem = assembleDeformationGrad(Fem);
-
 Fem.options.isAssembled = true;
 
 end
