@@ -86,8 +86,13 @@ while epsi > epsimin
     plam = p0 + P'*lam ;
     qlam = q0 + Q'*lam ;
     gvec = P*uxinv1 + Q*xlinv1;
-    %GG = P*spdiag(uxinv2,0,n,n) - Q*spdiag(xlinv2,0,n,n);
+    
+    % spdiag code
+    %GG = P*spdiags(uxinv2,0,n,n) - Q*spdiags(xlinv2,0,n,n);
+
+    % speye equivalent code
     GG = P * (uxinv2.*speye(n,n)) -  Q*(xlinv2.*speye(n,n));
+    
     dpsidx = plam./ux2 - qlam./xl2 ;
     delx = dpsidx - epsvecn./(x-alfa) + epsvecn./(beta-x);
     dely = c + d.*y - lam - epsvecm./y;
@@ -104,8 +109,13 @@ while epsi > epsimin
     if m < n
       blam = dellam + dely./diagy - GG*(delx./diagx);
       bb = [blam' delz]';
+      
+      % spdiag version
       %Alam = spdiag(diaglamyi,0,m,m) + GG*spdiag(diagxinv,0,n,n)*GG';
+      
+      % speye version
       Alam = diaglamyi.*speye(m,m) + GG*(diagxinv .* speye(n,n))*GG';
+      
       AA = [Alam     a
             a'    -zet/z ];
       solut = AA\bb;
@@ -115,8 +125,13 @@ while epsi > epsimin
     else
       diaglamyiinv = eem./diaglamyi;
       dellamyi = dellam + dely./diagy;
+      
+      % spdiag version
       %Axx = spdiag(diagx,0,n,n) + GG'*spdiag(diaglamyiinv,0,m,m)*GG;
-      Alam = diagx.*speye(m,m) + GG'*(diaglamyiinv .* speye(n,n))*GG;
+
+      % speye version
+      Axx = diagx.*speye(m,m) + GG'*(diaglamyiinv .* speye(n,n))*GG;
+      
       azz = zet/z + a'*(a./diaglamyi);
       axz = -GG'*(a./diaglamyi);
       bx = delx + GG'*(dellamyi./diaglamyi);
