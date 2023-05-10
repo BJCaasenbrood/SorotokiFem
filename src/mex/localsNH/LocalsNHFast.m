@@ -65,13 +65,16 @@ for q = 1:length(W)
     F = DeformationGradient(Delta,dNdx,Dim);
     
     % polar decompostion
-    [R, Q0, ~] = PolarDecomposition(F);
+    [Fiso, Fvol, ~] = PolarDecomposition(F);
 
-    % increase robustness low density
-    Q = Rb*(Q0-eye(3)) + eye(3);
+    % % increase robustness low density
+    if abs(dV) > 1e-12
+        Fvol = (1 - dV)^(1/3) * eye(3);
+        Fiso = (1 - dV)^(1/3) * F;
+    end
 
-    % robust deform
-    %F = R*Q;
+    % combine F 
+    F = Fiso*Fvol;
     
     % get internal stress matrix
     [S0, D0, Psi] = PiollaStress(Mu,Lambda,F);
@@ -86,8 +89,8 @@ for q = 1:length(W)
     [Bnl,Bg,NN,tau] = NonlinearStrainOperatorFast(N,dNdx,F);
     
     % local elemental rotation
-    RRe = RRe + R/nn;
-    UUe = UUe + Q/nn;
+    RRe = RRe + Fiso/nn;
+    UUe = UUe + Fvol/nn;
     
     % internal force vector
     Fe = Fe + tau*W(q)*Bnl.'*Se*dJ;

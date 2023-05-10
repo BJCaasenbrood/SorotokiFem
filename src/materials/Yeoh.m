@@ -106,15 +106,17 @@ y = Yeoh.contact.NormalDamping...
     *getModulus(Yeoh);
 end
 %---------------------------------------------------------------------- set
-function [S,S11,S33] = uniaxial(Yeoh,x)
+function [S,S11,S33,P] = uniaxial(Yeoh,x)
 S   = zeros(numel(x),1);
+P   = zeros(numel(x),1);
 S11 = zeros(numel(x),1);
 S33 = zeros(numel(x),1);
 for ii = 1:numel(x)
     F   = diag([x(ii),sqrt(1/x(ii)),sqrt(1/x(ii))]);
-    PK2 = PiollaStress(YeohMaterial,F);
+    [PK2,~,psi] = PiollaStress(Yeoh,F);
     SIG = (1/det(F))*F*PK2*(F.');
     
+    P(ii,1)   = psi;
     S(ii,1)   = SIG(1,1) - SIG(3,3);
     S11(ii,1) = SIG(1,1);
     S33(ii,1) = SIG(3,3);
@@ -128,8 +130,8 @@ S = zeros(3,3);
 C = F.'*F;
 J = det(F);
 
-YeohC = [Yeoh.C1,Yeoh.C2,Yeoh.C3];
-YeohD = [Yeoh.D1,Yeoh.D2,Yeoh.D3];
+YeohC = [Yeoh.params.C1,Yeoh.params.C2,Yeoh.params.C3];
+YeohD = [Yeoh.params.D1,Yeoh.params.D2,Yeoh.params.D3];
 
 I     = eye(3,3);
 Cinv  = minv(C);

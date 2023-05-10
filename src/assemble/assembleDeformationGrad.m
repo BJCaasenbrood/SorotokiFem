@@ -2,7 +2,6 @@ function Fem = assembleDeformationGrad(Fem)
 
     list = 1:Fem.Mesh.NElem;
     F2V = Fem.Mesh.geometry.FaceToNode;
-
     % for eacth element
     for ii = 1:Fem.Mesh.NNode
         Rtmp = zeros(3);
@@ -36,7 +35,7 @@ function Fem = assembleDeformationGrad(Fem)
         Q{ii} = Qtmp / numel(ElemFromNode);
     end
 
-    Fem.system.Rotation = R;
-    Fem.system.Stretch  = Q;
+    Fem.system.Rotation  = R;
+    Fem.system.Stretch   = Q;
     
 end

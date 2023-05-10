@@ -1,12 +1,12 @@
 function [Fnc, Ftc, Knc, Ktc] = assembleContactForces(Fem)
 
-omegaN  = Fem.materials.Material{1}.getContactReaction;
+omegaN = Fem.materials.Material{1}.getContactReaction;
 omegaT = Fem.materials.Material{1}.getContactFriction;
 
 Knc = sparse(Fem.Mesh.NNode*Fem.Dim,Fem.Mesh.NNode*Fem.Dim);
 Ktc = sparse(Fem.Mesh.NNode*Fem.Dim,Fem.Mesh.NNode*Fem.Dim);
-Fnc = sparse(Fem.Mesh.NNode*Fem.Dim,1);  % init normal contact force
-Ftc = sparse(Fem.Mesh.NNode*Fem.Dim,1);  % init tangent contact force
+Fnc = sparse(Fem.Mesh.NNode*Fem.Dim,1);  
+Ftc = sparse(Fem.Mesh.NNode*Fem.Dim,1);  
 SDF = Fem.system.Contact{1};
 
 Y0 = Fem.Mesh.Node;
@@ -64,7 +64,6 @@ if ~isempty(Intersect)
     Ftc(Ix,1) = -omegaT*(RF).*Ffric(:,1);% + 0*Dmod*V0(:,1);
     Ftc(Iy,1) = -omegaT*(RF).*Ffric(:,2);% + 0*Dmod*V0(:,2);
     
-
     index = 0;
     NDof  = Fem.Dim;
     I = zeros(numel(Ix)*NDof^2,1);

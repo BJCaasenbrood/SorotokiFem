@@ -1,4 +1,4 @@
-function Fem = assembleInternalForces(Fem)
+function Fem = assembleInternalForcesFem(Fem)
 
 beta    = Fem.options.loadingFactor;
 [E,~,V] = materialFieldFem(Fem);    
@@ -38,5 +38,13 @@ end
 Fem.system.fBody = sparse(Fem.triplets.i,1,E(Fem.triplets.e)       ...
     .*Fem.triplets.fb);    
 Fem.system.fBody = beta * Fem.system.fBody(qa);
-    
+
+
+ % global dilation force
+ W  = ones(Fem.Mesh.NElem,1);
+ Fem.system.fDilation = sparse(Fem.triplets.i,1,W(Fem.triplets.e)       ...
+ .*Fem.triplets.ft);    
+
+ Fem.system.fDilation =  0*Fem.system.fDilation(qa);
+ 
 end

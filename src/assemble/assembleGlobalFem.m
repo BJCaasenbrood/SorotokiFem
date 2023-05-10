@@ -19,6 +19,15 @@ dV  = 0*ones(Fem.Mesh.NElem,1);
 %     end
 % end
 
+if isfield(Fem.system,'Dilation')
+    for kk = 1:size(Fem.system.Dilation,1)
+        elDof = Fem.system.Dilation{kk,1};
+        eldV  = Fem.system.Dilation{kk,2}(Fem.solver.Time);
+
+        dV(elDof) = eldV;
+    end
+end
+
 beta    = Fem.options.loadingFactor;
 [E,~,V] = materialFieldFem(Fem);
 
@@ -26,10 +35,6 @@ Fem.system.Potential = 0;
 
 index    = 0; 
 subindex = 0;
-
-
-% if (~Fem.options.isAssembled && ~Fem.options.isNonlinear) ...
-%         || Fem.options.isNonlinear || ForceBuild
 
 if (~Fem.options.isAssembled && ~Fem.options.isNonlinear) || Fem.options.isNonlinear
 
@@ -127,6 +132,7 @@ for el = 1:Fem.Mesh.NElem
     Fem.triplets.p(ind3,1) = E(el)*EE(:,1);
     Fem.triplets.p(ind3,2) = E(el)*EE(:,2);
     Fem.triplets.p(ind3,3) = E(el)*EE(:,4);
+    Fem.triplets.vj(ind3,1) = dV(el);
     Fem.triplets.l(ind3)   = Fem.Mesh.Element{el}(:);
     
     Fem.system.Potential  = Fem.system.Potential + beta*Ve;
@@ -142,11 +148,11 @@ for el = 1:Fem.Mesh.NElem
     subindex = subindex + NDof/Fem.Dim;
 end
 
-    %Fem = assembleDeformationGrad(Fem);
-
+    Fem = assembleDeformationGrad(Fem);
 end
 
-Fem = assembleInternalForces(Fem);
+
+Fem = assembleInternalForcesFem(Fem);
 Fem.options.isAssembled = true;
 
 end
