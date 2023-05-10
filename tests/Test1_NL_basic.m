@@ -5,8 +5,8 @@
 % Add test cases here
 clr;
 
-sdf = sRectangle(0, 100, 0, 5);
-msh = Mesh(sdf,'NElem',120,'MaxIteration',150);
+sdf = sRectangle(100, 5);
+msh = Mesh(sdf,'NElem',150);
 msh = msh.generate();
 
 fem = Fem(msh,'TimeStep',0.1);
