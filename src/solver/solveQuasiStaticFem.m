@@ -1,5 +1,5 @@
 function Fem = solveQuasiStaticFem(Fem, varargin)
-
+  
 Ceq = [];
 qc  = [];    
 nc  = 0;
@@ -14,10 +14,15 @@ if isfield(Fem.system,'Displace')
 end
 
 if Fem.options.isNonlinear
-    Fem.solver.Time  = Fem.solver.TimeStep;
+    Fem.solver.Time  = 0;
 else
     Fem.solver.Time = Fem.solver.TimeHorizon - 1e-12;
     Fem.solver.MaxIteration = 2;
+end
+
+if Fem.solver.isLog
+    NSteps = round(Fem.solver.TimeHorizon/Fem.solver.TimeStep);
+    progBar = ProgressBar(NSteps,'Title', 'Solve static FEM');
 end
 
 while Fem.solver.Time < Fem.solver.TimeHorizon
@@ -60,6 +65,13 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
             th   = +Inf;
         end
 
+        % if  Fem.solver.Display && (mod(Fem.solver.Iteration,Fem.solver.DisplayAtEvery) == 0 || ...
+        %     Fem.solver.Iteration == 1)
+
+        %     log(Fem.solver.Time + 1e-6, Fem.solver.Iteration,...
+        %         norm(b), lam1 + 1e-6);
+        % end
+
         Fem.solver.Residual  = b;
         Fem.solver.Iteration = Fem.solver.Iteration + 1;
 
@@ -74,15 +86,14 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         Fem.solver.sol.x(qa) = x1;
         lam0 = lam1;
 
-        log(Fem.solver.Time + 1e-6, ...
-            Fem.solver.Iteration,...
-            norm(b),...
-            lam1 + 1e-6);
+    end
+
+    if Fem.solver.isLog
+        progBar([], [], []);
     end
 
     Fem.solver.Time = clamp(Fem.solver.Time + Fem.solver.TimeStep,...
         0,Fem.solver.TimeHorizon);
-    % Fem.states.x(qa) = Fem.solver.sol.x(qa);
 
     if ~isempty(Fem.options.Display)
         Fem.options.Display(Fem);
@@ -90,16 +101,18 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
     end
 end
 
-fprintf('\n');
+if Fem.solver.isLog
+    fprintf('\n');
+end
 
 end
 
-function log(ii,jj,f,g)
-    if ii < 1e-3 
-        fprinttable({'time', 'step','force residual','lambda'}, [ii, jj, f,g],'open',true);
-    else
-        fprinttable({'time', 'step', 'force residual','lambda'}, [ii, jj, f,g], 'addrow',true,'open',true);
-    end
-    pause(.0);
-end
+% function log(ii,jj,f,g)
+%     if ii < 1e-3 
+%         fprinttable({'time', 'step','force residual','lambda'}, [ii, jj, f,g],'open',true);
+%     else
+%         fprinttable({'time', 'step', 'force residual','lambda'}, [ii, jj, f,g], 'addrow',true,'open',true);
+%     end
+%     pause(.0);
+% end
 

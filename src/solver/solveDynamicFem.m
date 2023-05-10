@@ -1,4 +1,4 @@
-function Fem = solveDynamicsFem(Fem, varargin)
+function Fem = solveDynamicFem(Fem, varargin)
 
 h      = [];
 rho    = 0;
@@ -113,66 +113,3 @@ function log(ii,jj,f,g)
     end
     pause(.0);
 end
-
-
-
-% function [dM,vM,aM] = Galpha_integration(dt,n,d0,v0,a0,Mass,Damp,Stiffness,Force)
-%     % Generalized-alpha method
-%     % M x_tt + C x_t +K x = F
-%     % M, C, K can be dependent on x, which is nonlinear, or independent on x,
-%     % which is linear
-%     % F can be a function of time t
-    
-%     alpha_m = 1/2;
-%     alpha_f = 1/2;
-%     gamma = 1/2-alpha_m+alpha_f;
-%     beta = 1/4*(1-alpha_m+alpha_f)^2;
-%     d = length(d0);
-%     dM = zeros(n,d);
-%     vM = zeros(n,d);
-%     aM = zeros(n,d);
-%     dM(1,:) = d0;
-%     vM(1,:) = v0;
-%     aM(1,:) = a0;
-%     options = optimoptions('fsolve','Algorithm','levenberg-marquardt','Display','None');
-%     for i = 1:n-1
-%         dc = dM(i,:);
-%         vc = vM(i,:);
-%         ac = aM(i,:);
-%         tc = (i-1)*dt;
-%         fun = @(x) Generalized_alpha(x,dc,vc,ac,dt,tc,Mass,Damp,Stiffness,Force,alpha_m,alpha_f);
-%         y = fsolve(fun,ac,options);
-%         y = (y(:))';
-%         dn = dc+dt*vc+dt^2/2*((1-2*beta)*ac+2*beta*y);
-%         vn = vc+dt*((1-gamma)*ac+gamma*y);
-%         dM(i+1,:) = dn;
-%         vM(i+1,:) = vn;
-%         aM(i+1,:) = y;
-%     end
-%     end
-    
-    
-    
-    
-%     function equ = Generalized_alpha(x,dc,vc,ac,dt,tc,Mass,Damp,Stiffness,Force,alpha_m,alpha_f)
-%     % M a_(n+1-alpha_m) + C v_(n+1-alpha_f) + K d_(n+1-alpha_f) =
-%     % F_(n+1-alpha_f)\
-%     % x -- an, the accelerations at the next step
-%     gamma = 1/2-alpha_m+alpha_f;
-%     beta = 1/4*(1-alpha_m+alpha_f)^2;
-%     %
-%     dn = dc+dt*vc+dt^2/2*((1-2*beta)*ac+2*beta*x);
-%     vn = vc+dt*((1-gamma)*ac+gamma*x);
-%     %
-%     df = (1-alpha_f)*dn+alpha_f*dc;
-%     vf = (1-alpha_f)*vn+alpha_f*vc;
-%     am = (1-alpha_m)*x+alpha_m*ac;
-%     tf = (1-alpha_f)*(tc+dt)+alpha_f*tc;
-%     %
-%     M = Mass(df,vf,am);
-%     C = Damp(df,vf,am);
-%     K = Stiffness(df,vf,am);
-%     Ff = Force(tf);
-%     %
-%     equ = M*am'+C*vf'+K*df'-(Ff(:))';
-%     end
