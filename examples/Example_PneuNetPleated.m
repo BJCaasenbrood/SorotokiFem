@@ -16,7 +16,7 @@ fem = fem.addSupport('left',[1,1]);
 fem = fem.addContact(sCircle(20,[25,-30]));
 
 fem.options.LineStyle = 'none';
-fem.options.isNonlinear = 0;
+fem.options.isNonlinear = 1;
 fem.options.Display = @plt;
 
 fem = solveDynamicFem(fem);

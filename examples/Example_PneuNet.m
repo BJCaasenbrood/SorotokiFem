@@ -26,14 +26,13 @@ for ii = 1:8
     msh = msh.removeElements(E);
 end
 
-fem = Fem(msh,'TimeStep',1/300);
-fem = fem.addMaterial(Ecoflex0030);
+fem = Fem(msh,'TimeStep',1/60);
+fem = fem.addMaterial(Ecoflex0030(20));
 fem = fem.addMaterial(NeoHookean(1,0.2));
 
 fem = fem.setMaterial(msh.findElements('box',[w-2*t,w,0,l]),2);
 
-showMaterialsFem(fem);
-axis on;
+showMaterialsFem(fem); axis on;
 
 fem = fem.addPressure(fem.findEdges('allhole'), 25 * 1e-3);
 fem = fem.addSupport('bottom',[1,1]);
