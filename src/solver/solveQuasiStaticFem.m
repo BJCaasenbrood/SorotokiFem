@@ -85,7 +85,6 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         Fem.solver.sol.u(qc) = u1;
         Fem.solver.sol.x(qa) = x1;
         lam0 = lam1;
-
     end
 
     if Fem.solver.isLog

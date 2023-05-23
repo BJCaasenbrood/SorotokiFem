@@ -21,7 +21,6 @@ classdef NeoHookean
     end
     
     properties (Access = private)
-
         Alpha;
     end
 
@@ -41,9 +40,15 @@ function obj = NeoHookean(varargin)
     elseif numel(varargin{1}) == 2
         C = varargin{1};
         E0 = C(1); Nu0 = C(2);
+        if numel(varargin) > 1
+            varargin = varargin(2:end);
+        end
     else
         E0 = varargin{1};
-        Nu0 = varargin{2};        
+        Nu0 = varargin{2};     
+        if numel(varargin) > 2
+            varargin = varargin(3:end);
+        end   
     end
     
     obj.params.E      = E0;
@@ -56,6 +61,14 @@ function obj = NeoHookean(varargin)
     obj.contact.NormalDamping   = 0.05;
     obj.contact.NormalReaction  = 0.5;
     obj.contact.TangentFriction = 0.3;
+
+    for ii = 1:2:length(varargin)
+        if isfield(obj.contact,varargin{ii})
+            obj.contact.(varargin{ii}) = varargin{ii+1};
+        elseif isfield(obj.params,varargin{2*ii-1})
+            obj.params.(varargin{ii}) = varargin{ii+1};
+        end
+    end
 
 end
 %---------------------------------------------------------------------- get     
