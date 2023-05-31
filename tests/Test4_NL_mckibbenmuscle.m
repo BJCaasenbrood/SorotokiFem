@@ -26,5 +26,7 @@ fem = fem.addPressure(I,15 * 1e-3);
 fem = fem.addSupport('top',[1,1]);
 qa = fem.system.Ia;
 
-fem = solveQuasiStaticFem(fem);
-showVonMisesFem(fem);
+fem = fem.set('isLog',false);
+
+% fem = solveQuasiStaticFem(fem);
+% showVonMisesFem(fem);
