@@ -42,7 +42,7 @@ if isfield(Fem.system,'Displace') && ~Fem.options.isPrescribed
     cDofs   = find(ce);
     cMatrix = diag(ce);
     AllDofs    = 1:Fem.Dim*Fem.Mesh.NNode;
-    % [FreeDofs] = setdiff(AllDofs,cDofs);
+
     [Ice,~]     = ismember(AllDofs(:),cDofs(:));
 
     Fem.system.cMatrix   = cMatrix(cDofs,qa);
@@ -50,7 +50,7 @@ if isfield(Fem.system,'Displace') && ~Fem.options.isPrescribed
     Fem.system.Ic        = Ice;
 end
 
-%%
+%
 Fem.system.fContact = Fnc(qa);
 Fem.system.fTangent = Ftc(qa);
 Fem.system.fInput   = F(qa) + Ft(qa) + Fnc(qa) + Ftc(qa);

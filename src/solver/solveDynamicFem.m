@@ -13,6 +13,11 @@ if ~isfield(Fem.system,'Ia')
     Fem.system.Ia = 1:Fem.Dim * Fem.Mesh.NNode;
 end
 
+if Fem.solver.isLog
+    NSteps = round(Fem.solver.TimeHorizon/Fem.solver.TimeStep);
+    progBar = ProgressBar(NSteps,'Title', 'Solve static FEM');
+end
+
 qa = Fem.system.Ia; 
 
 if ~isfield(Fem.solver.sol,'ddx')
@@ -86,10 +91,15 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         dfdq0 = dfdq1;
     end
 
-    log(tf + eps, ...
-    Fem.solver.Iteration,...
-    norm(b),...
-    lam1+eps);
+
+    if Fem.solver.isLog
+        progBar([], [], []);
+    end
+    % 
+    % log(tf + eps, ...
+    % Fem.solver.Iteration,...
+    % norm(b),...
+    % lam1+eps);
 
     Fem.solver.Time = clamp(tf + Fem.solver.TimeStep,...
         0,Fem.solver.TimeHorizon);
@@ -103,13 +113,17 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
     end
 end
 
+if Fem.solver.isLog
+    fprintf('\n');
 end
 
-function log(ii,jj,f,g)
-    if ii < 1e-3
-        fprinttable({'time', 'step','force residual','lambda'}, [ii, jj, f,g],'open',true);
-    else
-        fprinttable({'time', 'step', 'force residual','lambda'}, [ii, jj, f,g], 'addrow',true,'open',true);
-    end
-    pause(.0);
 end
+
+% function log(ii,jj,f,g)
+%     if ii < 1e-3
+%         fprinttable({'time', 'step','force residual','lambda'}, [ii, jj, f,g],'open',true);
+%     else
+%         fprinttable({'time', 'step', 'force residual','lambda'}, [ii, jj, f,g], 'addrow',true,'open',true);
+%     end
+%     pause(.0);
+% end
