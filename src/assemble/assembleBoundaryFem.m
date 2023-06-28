@@ -39,11 +39,11 @@ end
 % adding contact loads
 if isfield(Fem.system,'Displace') && ~Fem.options.isPrescribed
     [ge, ce] = assembleDisplaceEq(Fem);
-    cDofs   = find(ce);
+    cDofs   = find(ce == 1);
     cMatrix = diag(ce);
     AllDofs    = 1:Fem.Dim*Fem.Mesh.NNode;
 
-    [Ice,~]     = ismember(AllDofs(:),cDofs(:));
+    [Ice,~]  = ismember(AllDofs(:),cDofs(:));
 
     Fem.system.cMatrix   = cMatrix(cDofs,qa);
     Fem.system.cResidual = ge(cDofs);

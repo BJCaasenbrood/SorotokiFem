@@ -4,21 +4,6 @@ classdef Yeoh
         Type;
         params;
         contact;
-        % C1   = 0.1;
-        % C2   = 0;
-        % C3   = 0;
-        % D1   = 0.2;
-        % D2   = .20;
-        % D3   = .20;
-        % % Rho  = 1e-9;
-        % % Zeta = 0.1;
-        % % Rr   = 0.1;
-        % % Cfr  = 1e-6;
-        % Density                = 970e-12;
-        % Damping                = 0.4;
-        % ContactNormalDamping   = 0.05;
-        % ContactNormalReaction  = 0.1;
-        % ContactTangentFriction = 0.1;
     end
     
     properties (Access = private)
@@ -46,7 +31,7 @@ function obj = Yeoh(varargin)
     obj.params.C2 = 0;
     obj.params.C3 = 0;
 
-    obj.params.D1 = 20;
+    obj.params.D1 = 1;
     obj.params.D2 = 20;
     obj.params.D3 = 20;
 

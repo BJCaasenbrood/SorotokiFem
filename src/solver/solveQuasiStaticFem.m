@@ -25,6 +25,11 @@ if Fem.solver.isLog
     progBar = ProgressBar(NSteps,'Title', 'Solve static FEM');
 end
 
+    % preallocate solutions
+    Fem.solver.sol.yout = zeros(NSteps,Fem.Dim * Fem.Mesh.NNode);
+    Fem.solver.sol.tout = zeros(NSteps,1);
+    Fem.solver.SubIteration = 1;
+    
 while Fem.solver.Time < Fem.solver.TimeHorizon
 
     beta = Fem.solver.Time / Fem.solver.TimeHorizon;
@@ -91,6 +96,11 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
     if Fem.solver.isLog
         progBar([], [], []);
     end
+
+    step = Fem.solver.SubIteration;
+    Fem.solver.sol.yout(step,:) = Fem.solver.sol.x;
+    Fem.solver.sol.tout(step)   = Fem.solver.Time;
+    Fem.solver.SubIteration = Fem.solver.SubIteration + 1;
 
     Fem.solver.Time = clamp(Fem.solver.Time + Fem.solver.TimeStep,...
         0,Fem.solver.TimeHorizon);

@@ -11,12 +11,18 @@ function [ge, ce] = assembleDisplaceEq(Fem)
     
         for jj = 1:Fem.Dim
             ind = Fem.Dim*fDof+(jj-Fem.Dim);
-            ge(ind,1) = ge(ind,1) + feval(jj);
+            %if feval(jj) == 0
             ce(ind,1) = 1.0;
+            %else
+            %    ce(ind,1) = 0.0;
+            %end
+            ge(ind,1) = ge(ind,1) + feval(jj);
         end
 
     end
 
+    %ge = ge(ce~=0);
+    %ce = ce(ce~=0);
 end
 
 
