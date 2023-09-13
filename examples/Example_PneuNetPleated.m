@@ -1,9 +1,8 @@
 clr;
 
-msh = Mesh('PneunetFine.png','BdBox',[0,120,0,20],'NElem',650);
-msh = msh.generate();
+msh = preset.mesh.pneunet;
 
-fem = Fem(msh,'TimeStep',1/333,'BdBox',[-50 120 -100 20]);
+fem = Fem(msh,'TimeStep',1/25,'BdBox',[-50 120 -100 20]);
 fem = fem.addMaterial(NeoHookean(.2, 0.33));
 fem = fem.addMaterial(NeoHookean(5., 0.33));
 
@@ -13,16 +12,16 @@ fem = fem.setMaterial(bottomlayer,2);
 fem = fem.addPressure('allhole', @(t) 65 * 1e-3 * clamp(t,0,1) );
 fem = fem.addSupport('left',[1,1]);
 
-fem = fem.addContact(sCircle(20,[25,-30]));
+% fem = fem.addContact(sCircle(20,[25,-30]));
 
 fem.options.LineStyle = 'none';
 fem.options.isNonlinear = 1;
 fem.options.Display = @plt;
 
-fem = solveDynamicFem(fem);
+fem = fem.solve;
 
 function plt(Fem)
     cla;
     showMaterialsFem(Fem);
-    showContactFem(Fem);
+    % showContactFem(Fem);
 end

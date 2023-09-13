@@ -30,5 +30,4 @@ function [E, dEdy, V, dVdy] = materialFieldFem(Fem, ForceFilterOff)
             dEdy = (1 - eps) * penal * h .^ (penal - 1) .* dhdy;
             dVdy = dhdy;
     end
-
 end

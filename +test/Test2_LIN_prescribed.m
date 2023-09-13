@@ -4,7 +4,6 @@
 % Initialize the test suite
 % Add test cases here
 
-clr;
 sdf = sRectangle(0, 100, 0, 50);
 msh = Mesh(sdf,'Quads',[20,3],'MaxIteration',50);
 msh = msh.generate();
@@ -17,7 +16,7 @@ fem = fem.addDisplace('right', [150,0]);
 fem.options.isNonlinear = false;
 fem.options.Display = @plt;
 
-fem = solveQuasiStaticFem(fem);
+fem = fem.solve;
 
 function plt(Fem)
     cla;

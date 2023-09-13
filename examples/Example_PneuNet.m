@@ -37,4 +37,4 @@ showMaterialsFem(fem); axis on;
 fem = fem.addPressure(fem.findEdges('allhole'), 25 * 1e-3);
 fem = fem.addSupport('bottom',[1,1]);
 
-fem = solveQuasiStaticFem(fem);
+fem = fem.solve;

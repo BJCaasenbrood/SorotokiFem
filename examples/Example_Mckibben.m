@@ -16,6 +16,6 @@ fem = fem.addMaterial(NeoHookean);
 fem = fem.addMaterial(NeoHookean(0.01,0.45));
 fem = fem.setMaterial(E,2);
 fem = fem.addSupport('top',[1,1]);
-fem = fem.addDilation(E,-0.5);
+fem = fem.addDilation(E,0.5);
 
-fem = solveQuasiStaticFem(fem);
+fem = fem.solve;

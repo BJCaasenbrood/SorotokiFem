@@ -61,9 +61,9 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         Fem.solver.Iteration < Fem.solver.MaxIteration 
 
         % if Fem.solver.Iteration < 5
-        Fem = Fem.compute();
+            Fem = Fem.compute();
         % else
-        %     Fem = Fem.compute('full',false);
+            % Fem = Fem.compute('full',false);
         % end
 
         % linear solve

@@ -1,4 +1,4 @@
-function Fem = solveOptimizationFem(Fem, varargin)
+function Fem = optimize(Fem, varargin)
 
 % ensure that opt-log is not over run fem-log
 Fem.solver.Display = false;   
@@ -23,7 +23,7 @@ x0 = Fem.topology.sol.x;
 x1 = Fem.topology.sol.x;
 x2 = Fem.topology.sol.x;
 
-progBar = ProgressBar(Fem.topology.MaxIteration,'Title', 'Optimize FEM');
+progBar = ProgressBar(Fem.topology.MaxIteration,'Title', ' ');
 
 while Fem.topology.Iteration <= Fem.topology.MaxIteration
         
@@ -35,7 +35,7 @@ while Fem.topology.Iteration <= Fem.topology.MaxIteration
         %     Fem.SigmoidFactor);
        
         % solve nonlinear finite elements
-        Fem = solveQuasiStaticFem(Fem);
+        Fem = solve(Fem);
         
         % evaluate objective and constraints
         [f,dfdE,dfdV] = assembleTopoObjective(Fem);
@@ -76,14 +76,3 @@ progBar.release();
 fprintf('\n');
 
 end
-
-
-
-% function log(ii,jj,f,g)
-%     if ii < 1e-3 
-%         fprinttable({'time', 'step','force residual','lambda'}, [ii, jj, f,g],'open',true);
-%     else
-%         fprinttable({'time', 'step', 'force residual','lambda'}, [ii, jj, f,g], 'addrow',true,'open',true);
-%     end
-%     pause(.0);
-% end

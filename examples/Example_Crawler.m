@@ -3,9 +3,7 @@ W = 150;
 H = 12;
 
 %% generate mesh
-msh = Mesh('Crawler.png','BdBox',[0,W,0,H],'NElem',500);
-msh = msh.generate();
-msh.show();
+msh = preset.mesh.multigait_crawler;
 
 % %% FEM
 fem = Fem(msh,'TimeStep',1/350,'TimeHorizon',6);
@@ -32,7 +30,8 @@ fem = fem.addPressure(fem.findEdges('BoxHole',[50 100 0 15]),...
 fem = fem.addPressure(fem.findEdges('BoxHole',[100 150 0 15]),...
    @(t) pset(t,3));
 
-fem = solveDynamicFem(fem);
+fem.solver.MaxIteration = 20;
+fem = fem.simulate();
 
 function plt(Fem)
     clf;

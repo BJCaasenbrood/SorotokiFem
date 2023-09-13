@@ -182,7 +182,7 @@ end
 function [S] = IsotropicReduction(S0,Dim)
 
 if Dim == 2
-    S   = [S0(1); S0(2); S0(4)]; 
+    S = [S0(1); S0(2); S0(4)]; 
 else
     S = S0;
 end

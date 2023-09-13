@@ -43,10 +43,10 @@ if ~isempty(Intersect)
     Vn = V0./(vecnorm(V0.').');
 
     % friction penalty function (i.e, expected distance traveled)
-    gt = (dot(Vn.',T.').') * Fem.solver.TimeStep;
+    gt = (dot(V0.',T.').') * Fem.solver.TimeStep;
 
     % stick-slip boolean vector
-    cType = abs(omegaT * gt) >= abs(mu * omegaN * gn);
+    cType = (abs(omegaT * gt) >= abs(mu * omegaN * gn));
 
     Fcont = -omegaN * [Ux, Uy];
     FfricStick = -omegaT*gt.*T;
