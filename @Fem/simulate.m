@@ -12,7 +12,7 @@ function Fem = simulate(Fem, varargin)
 %
 %   See also compute, simulate, optimize, update.
 
-rho    = 0.25;
+rho    = 0;
 alphaM = (2*rho - 1)/(rho + 1);
 alphaF = (rho)/(rho + 1);
 

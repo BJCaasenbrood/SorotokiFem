@@ -82,7 +82,7 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
 
         if Fem.solver.Iteration > 1
             minL = sqrt(1+th) * lam0;
-            maxL = norm([x1;u1] - [x0;u0])/norm(dfdq1 - dfdq0);
+            maxL = 0.5 * norm([x1;u1] - [x0;u0])/norm(dfdq1 - dfdq0);
             lam1 = clamp(min([minL, maxL]), 1e-6, Inf);
             th   = lam1/lam0;
         else
