@@ -1,6 +1,5 @@
 function Fem = setupFiniteElement(Fem)
 
-%Fem.ElemNDof      = Fem.Dim*cellfun(@length,Fem.Mesh,Element);
 P = meshregularizationfilter(Fem.Mesh, Fem.topology.SpatialFilterRadius,    ...
     'Periodic',Fem.topology.Periodic);
 
@@ -27,6 +26,10 @@ if (~Fem.options.isAssembled && ~Fem.options.isNonlinear)                   ...
     Fem.triplets.l  = zeros(Fem.Mesh.NNode,1);
     Fem.triplets.vj = zeros(Fem.Mesh.NNode,1);
     
+end
+
+if ~isfield(Fem.system,'ContactMesh')
+    Fem = assembleContactMeshFem(Fem);
 end
 
 end

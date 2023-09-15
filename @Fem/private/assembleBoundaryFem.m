@@ -40,7 +40,7 @@ if isfield(Fem.system,'Displace') && ~Fem.options.isPrescribed
     [ge, ce] = assembleDisplaceEq(Fem);
     cDofs   = find(ce == 1);
     cMatrix = diag(ce);
-    AllDofs    = 1:Fem.Dim*Fem.Mesh.NNode;
+    AllDofs = 1:Fem.Dim*Fem.Mesh.NNode;
 
     [Ice,~]  = ismember(AllDofs(:),cDofs(:));
 
@@ -52,7 +52,7 @@ end
 %
 Fem.system.fContact = Fnc(qa);
 Fem.system.fTangent = Ftc(qa);
-Fem.system.fInput   = F(qa) + Ft(qa) + Fnc(qa) + Ftc(qa);
+Fem.system.fInput   = F(qa) + Ft(qa) + Fnc(qa) + 0*Ftc(qa);
 % Fem.Stiffness        = K + spMat;
 % Fem.TangentStiffness = Ktr + spMat;
 %Fem.fResidual     = Fem.fInternal - Fem.fExternal - Fem.fInput;

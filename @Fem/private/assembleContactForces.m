@@ -10,13 +10,16 @@ Fnc = sparse(Fem.Mesh.NNode*Fem.Dim,1);
 Ftc = sparse(Fem.Mesh.NNode*Fem.Dim,1);  
 SDF = Fem.system.Contact{1};
 
-Y0   = Fem.Mesh.Node;
+Ia = Fem.system.ContactMesh.NodeId;
+qa = Fem.system.ContactMesh.qa;
+
+Y0   = Fem.Mesh.Node(Ia,:);
 [U]  = meshfield(Fem,Fem.solver.sol.x);
 [dU] = meshfield(Fem,Fem.solver.sol.dx);
 
-Y  = Y0 + U;
+Y  = Y0 + U(Ia,:);
 
-eps = Fem.solver.TimeStep * 100;
+eps = Fem.solver.TimeStep * 10;
 
 d = SDF(Y);
 Intersect = find((d(:,end))<eps);
@@ -33,30 +36,35 @@ if ~isempty(Intersect)
     T(:,2) =  n1(:,end);
     T(:,1) = -n2(:,end);
 
-    % contact penalty function
-    gn = clamp(d(I,end),-Inf,0); 
-
-    Ux = gn.*n1(:,end);
-    Uy = gn.*n2(:,end);
-
-    V0 = dU(I,:);
-    Vn = V0./(vecnorm(V0.').');
+    V0 = dU(Ia(I),:);
+    % Vn = V0./(vecnorm(V0.').');
 
     % friction penalty function (i.e, expected distance traveled)
     gt = (dot(V0.',T.').') * Fem.solver.TimeStep;
 
+    % contact penalty function
+    dist = abs(d(I,end));
+    % dhat = clamp(abs(dot(V0.', N.').') * Fem.solver.TimeStep,0,1);
+    % ipcType =  dist < dhat;
+
+    gn = -dist;
+    % gn = ipcType .* ( - (dist - dhat).^2 .* log(dist./dhat) ) ./ (dist/Fem.solver.TimeStep);
+
+    Ux = gn.*n1(:,end);
+    Uy = gn.*n2(:,end);
+
     % stick-slip boolean vector
-    cType = (abs(omegaT * gt) >= abs(mu * omegaN * gn));
+    cType = ~(abs(omegaT * gt) >= abs(mu * omegaN * gn));
 
     Fcont = -omegaN * [Ux, Uy];
     FfricStick = -omegaT*gt.*T;
-    FfricSlip  = mu*omegaN*sign(gt).*gn.*T;
+    FfricSlip = mu*omegaN*sign(gt).*gn.*T;
 
     % RF = -omegaN * [Ux, Uy];
     % RF = (vecnorm(RF.').');
 
-    Ix = 2*I(1:size(Y(I,:),1),1)-1;
-    Iy = 2*I(1:size(Y(I,:),1),1);
+    Ix = 2*Ia(I(1:size(Y(I,:),1),1))-1;
+    Iy = 2*Ia(I(1:size(Y(I,:),1),1));
 
     Fnc(Ix,1) = Fcont(:,1);
     Fnc(Iy,1) = Fcont(:,2);
