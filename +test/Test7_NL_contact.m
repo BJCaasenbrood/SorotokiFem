@@ -6,14 +6,14 @@
 
 % mesh
 con = SDF(15);
-sdf = sCircle(5,[18,25]) - sCircle(3,[18,25]);
+sdf = sCircle(5,[18,25]) - sCircle(3.5,[18,25]);
 msh = Mesh(sdf,'NElem',55,'MaxIteration',500);
 msh = msh.generate();
 
 msh.BdBox = [-20,30,-10,30];
 
-fem = Fem(msh,'TimeStep',1/850,'TimeHorizon',.5);
-fem = fem.addMaterial(NeoHookean(0.01,0.0));
+fem = Fem(msh,'TimeStep',1/1250,'TimeHorizon',.5);
+fem = fem.addMaterial();
 
 fem = fem.addGravity();
 fem = fem.addContact(con);
