@@ -32,8 +32,8 @@ function obj = Yeoh(varargin)
     obj.params.C3 = 0;
 
     obj.params.D1 = 1;
-    obj.params.D2 = 1;
-    obj.params.D3 = 1;
+    obj.params.D2 = 10;
+    obj.params.D3 = 10;
 
     obj.contact.NormalDamping   = 0.05;
     obj.contact.NormalReaction  = 0.1;
@@ -46,6 +46,8 @@ function obj = Yeoh(varargin)
             obj.params.C1 = C(1); 
             obj.params.C2 = C(2); 
             obj.params.C3 = C(3);
+        elseif numel(varargin{1}) == 1
+            obj.params.C1 = varargin{1};
         else
             for ii = 1:2:length(varargin)
                 obj.params.(varargin{ii}) = varargin{ii+1};
