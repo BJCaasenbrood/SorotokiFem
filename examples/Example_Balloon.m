@@ -10,4 +10,4 @@ fem = fem.addPressure('allhole',100 * 1e-3);
 
 fem = fem.addSupport('Bottom',[1,1]);
 
-fem = solveQuasiStaticFem(fem);
+fem = fem.solve;

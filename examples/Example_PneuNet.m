@@ -27,8 +27,8 @@ for ii = 1:8
 end
 
 fem = Fem(msh,'TimeStep',1/60);
-fem = fem.addMaterial(Ecoflex0030(20));
-fem = fem.addMaterial(NeoHookean(1,0.2));
+fem = fem.addMaterial(preset.material.Ecoflex0030(20));
+fem = fem.addMaterial(NeoHookean(1,0.3));
 
 fem = fem.setMaterial(msh.findElements('box',[w-2*t,w,0,l]),2);
 
