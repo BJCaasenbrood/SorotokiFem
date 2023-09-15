@@ -4,7 +4,7 @@ p = inputParser;
 % Add optional inputs and default values
 addOptional(p,'n',1750);
 addOptional(p,'d',250);
-addOptional(p,'dt',1/120);
+addOptional(p,'dt',1/750);
 addOptional(p,'control',0);
 
 % Parse the inputs
@@ -16,16 +16,15 @@ msh = preset.mesh.multigait_crawler('n',p.Results.n);
 % Create a Fem object
 fem = Fem(msh,'TimeStep',p.Results.dt);
 % Add a Neo-Hookean material
-fem.addMaterial(NeoHookean(0.2, 0.49));
-fem.addMaterial(NeoHookean(1.0, 0.49));
+fem.addMaterial(NeoHookean(0.2, 0.4));
+fem.addMaterial(NeoHookean(1.0, 0.4));
 
 % set bottom layer to material 2
 BotLayer = fem.findElements('Box',[0,150,0,2]);
 fem = fem.setMaterial(BotLayer,2);
 
 % Add gravity
-gvec = [0; -9800];
-fem = fem.addGravity(gvec);
+fem = fem.addGravity();
 
 % Add a contact plane
 flr = sLine(p.Results.d,-10,-.01,-.01);
@@ -33,6 +32,7 @@ fem = fem.addContact(flr);
 
 % Set the display function
 fem.options.Display = @plt;
+fem.solver.MaxIteration = 6;
 
 if p.Results.control
     fem = fem.addPressure(fem.findEdges('BoxHole',[0 50 0 15]),...

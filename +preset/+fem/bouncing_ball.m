@@ -11,15 +11,14 @@ addOptional(p,'dt',1/1250);
 parse(p,varargin{:});
 
 % mesh
-sdf = sCircle(5,[18,13]) - sCircle(3.5,[18,13]);
+sdf = sCircle(5,[18,25]) - sCircle(3.5,[18,25]);
 msh = Mesh(sdf,'NElem',55);
 msh = msh.generate();
 
 % Create a Fem object
 fem = Fem(msh,'TimeStep',p.Results.dt);
 % Add a Neo-Hookean material
-fem = fem.addMaterial(Yeoh([1e-3,0,0]));
-%fem = fem.addMaterial(Yeoh);
+fem = fem.addMaterial(NeoHookean(0.01,0.3));
 
 % Set the contact parameters
 % fem.materials.Material{1}.contact.NormalReaction  = 1.0;

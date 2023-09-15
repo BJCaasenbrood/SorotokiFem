@@ -27,13 +27,6 @@ function fem = diamond_bot(varargin)
         gvec = -9800*[sind(p.Results.theta); cosd(p.Results.theta)];
         fem = fem.addGravity(gvec);
     end
-    
-    % if p.Results.contact
-    %    fem = fem.addContact(sCircle(20, [25,-30]));
-    % end
-
-    % Add pressure loads to all holes
-    % fem = fem.addPressure('allhole', @(t) 75 * 1e-3 * clamp(t,0,1) );
 
     fem.options.LineStyle = 'none';
     fem.options.Display = @(x) plt(x,p);
