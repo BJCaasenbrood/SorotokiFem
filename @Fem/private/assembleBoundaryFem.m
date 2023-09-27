@@ -4,6 +4,7 @@ qa  = Fem.system.Ia;
 Ft  = sparse(Fem.Mesh.NNode*Fem.Dim,1);  % init contraction force
 Fnc = sparse(Fem.Mesh.NNode*Fem.Dim,1);  % init normal contact force
 Ftc = sparse(Fem.Mesh.NNode*Fem.Dim,1);  % init tangent contact force
+Fc  = sparse(Fem.Mesh.NNode*Fem.Dim,1);  % init global force vector
 F   = sparse(Fem.Mesh.NNode*Fem.Dim,1);  % init global force vector
 L   = sparse(Fem.Dim*Fem.Mesh.NNode,1);  % init output vector
 
@@ -33,6 +34,8 @@ if isfield(Fem.system,'Contact') && ~Fem.options.isPrescribed
     [Fnc, Ftc, Knc, Ktc] = assembleContactForces(Fem);
     Fem.system.Tangent = Fem.system.Tangent ... 
         + Knc(qa,qa) + Ktc(qa,qa);
+    % Fem.system.Damping = Fem.system.Damping ... 
+    %     + Knc(qa,qa) * Fem.solver.TimeStep;      
 end
 
 % adding displacement loads
@@ -49,13 +52,22 @@ if isfield(Fem.system,'Displace') && ~Fem.options.isPrescribed
     Fem.system.Ic        = Ice;
 end
 
+% adding controller loads
+if isfield(Fem.system,'Controller') 
+    u = Fem.system.Controller(Fem);
+    G = Fem.system.InputMap(Fem);
+    Fc = G * u;
+
+    Fem.system.fControl = u;
+elseif isfield(Fem.system,'fControl') && ~isfield(Fem.system,'Controller') 
+    G  = Fem.system.InputMap(Fem);
+    Fc = G * Fem.system.fControl;
+end
+
 %
 Fem.system.fContact = Fnc(qa);
 Fem.system.fTangent = Ftc(qa);
-Fem.system.fInput   = F(qa) + Ft(qa) + Fnc(qa) + 0*Ftc(qa);
-% Fem.Stiffness        = K + spMat;
-% Fem.TangentStiffness = Ktr + spMat;
-%Fem.fResidual     = Fem.fInternal - Fem.fExternal - Fem.fInput;
-Fem.system.Output = L;
+Fem.system.fInput   = F(qa) + Ft(qa) + Fnc(qa) + Ftc(qa) + Fc(qa);
+Fem.system.Output   = L;
 end
 

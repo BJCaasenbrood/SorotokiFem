@@ -17,8 +17,7 @@ Y0   = Fem.Mesh.Node(Ia,:);
 [U]  = meshfield(Fem,Fem.solver.sol.x);
 [dU] = meshfield(Fem,Fem.solver.sol.dx);
 
-Y  = Y0 + U(Ia,:);
-
+Y   = Y0 + U(Ia,:);
 eps = Fem.solver.TimeStep * 10;
 
 d = SDF(Y);
@@ -98,7 +97,7 @@ if ~isempty(Intersect)
     end
 
     Knc = sparse(I,J,Ke, ...
-          Fem.Mesh.NNode*Fem.Dim,Fem.Mesh.NNode*Fem.Dim);
+        Fem.Mesh.NNode*Fem.Dim,Fem.Mesh.NNode*Fem.Dim);
 
     Ktc = omegaT*sparse(I,J,Te, ...
         Fem.Mesh.NNode*Fem.Dim,Fem.Mesh.NNode*Fem.Dim);
