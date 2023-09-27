@@ -11,6 +11,18 @@ function Fem = solve(Fem, varargin)
 %      Fem = Fem.solve('TimeStep', 1e-3);      % sets timesteps for solver
 %
 %   See also compute, simulate, optimize.
+
+for ii = 1:2:length(varargin)
+    if isprop(Fem.options,varargin{ii})
+        Fem.options.(varargin{ii}) = varargin{ii+1};
+    elseif isprop(Fem.solver,varargin{ii})
+        Fem.solver.(varargin{ii}) = varargin{ii+1};
+    elseif isprop(Fem.topology,varargin{ii})
+        Fem.topology.(varargin{ii}) = varargin{ii+1};
+    else
+        Fem.(varargin{ii}) = varargin{ii+1};
+    end
+end
   
 Ceq = [];
 qc  = [];    
@@ -36,7 +48,7 @@ end
 
 NSteps = round(Fem.solver.TimeHorizon/Fem.solver.TimeStep);
 if Fem.solver.isLog
-    progBar = ProgressBar(NSteps,'Title', ' ');
+    % progBar = ProgressBar(NSteps,'Title', ' ');
 end
 
 % preallocate solutions
@@ -69,7 +81,7 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         % linear solve
         if isempty(Ceq)
             b = Fem.system.fResidual;
-            A = Fem.system.Stiffness;
+            A = Fem.system.Tangent;
         else
             b = [Fem.system.fResidual + Ceq.'*Fem.solver.sol.u(qc); ...
                  -Fem.system.cResidual];
@@ -78,11 +90,12 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         end
 
         % solve for the displacement increment
+        % dA = decomposition(A,'qr');
         dfdq1 = A \ b;
 
         if Fem.solver.Iteration > 1
             minL = sqrt(1+th) * lam0;
-            maxL = 0.5 * norm([x1;u1] - [x0;u0])/norm(dfdq1 - dfdq0);
+            maxL = norm([x1;u1] - [x0;u0])/norm(dfdq1 - dfdq0);
             lam1 = clamp(min([minL, maxL]), 1e-6, Inf);
             th   = lam1/lam0;
         else
@@ -104,16 +117,16 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         lam0  = lam1;
         dfdq0 = dfdq1;
 
-        % if Fem.solver.isLog
-        %     if Fem.solver.Iteration == 2,
-        %         disp(' -----------------------------------------');
-        %         disp(' |  Iter | Eval |   f(x)   |  Step-size  |');
-        %         disp(' -----------------------------------------');
-        %     end
-        %     s=sprintf(' %5.0f  %5.0f     %5.3e %13.5g    ', ...
-        %         Fem.solver.SubIteration, Fem.solver.Iteration-1, norm(Fem.solver.Residual),lam1); 
-        %     disp(s);
-        % end
+        if Fem.solver.isLog
+            if Fem.solver.Iteration == 2,
+                disp(' -----------------------------------------');
+                disp(' |  Iter | Eval |   f(x)   |  Step-size  |');
+                disp(' -----------------------------------------');
+            end
+            s=sprintf(' %5.0f  %5.0f     %5.3e %13.5g    ', ...
+                Fem.solver.SubIteration, Fem.solver.Iteration-1, norm(Fem.solver.Residual),lam1); 
+            disp(s);
+        end
     end
 
     step = Fem.solver.SubIteration;
@@ -125,7 +138,7 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         0,Fem.solver.TimeHorizon);
 
     if Fem.solver.isLog
-        progBar([],[],[]);
+        % progBar([],[],[]);
     end
 
     if ~isempty(Fem.options.Display)
@@ -136,7 +149,7 @@ end
 
 if Fem.solver.isLog
     fprintf('\n');
-    progBar.release();
+    % progBar.release();
 end
 
 end
