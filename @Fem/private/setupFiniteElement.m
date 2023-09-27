@@ -28,6 +28,9 @@ if (~Fem.options.isAssembled && ~Fem.options.isNonlinear)                   ...
     
 end
 
+% set the input-mapping G as identity;
+Fem.system.InputMap = @(x) speye(Fem.Mesh.NNode*Fem.Dim);
+
 if ~isfield(Fem.system,'ContactMesh')
     Fem = assembleContactMeshFem(Fem);
 end
