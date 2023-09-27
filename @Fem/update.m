@@ -1,7 +1,7 @@
 function Fem = update(Fem, varargin)
 
 if nargin > 1
-    Shapes.solver.TimeStep = varargin{1};
+    Fem.solver.TimeStep = varargin{1};
 end    
 
 rho    = 0.25;
@@ -17,7 +17,7 @@ end
 
 qa = Fem.system.Ia;
 
-if Shapes.solver.Time < Shapes.solver.TimeStep  
+if Fem.solver.Time < Fem.solver.TimeStep  
     if ~isfield(Fem.solver.sol,'ddx')
         
         Fem.solver.sol.ddx = Fem.solver.sol.dx * 0;
@@ -72,7 +72,7 @@ while norm(Fem.solver.Residual) > Fem.solver.RelTolerance && ...
     
     if Fem.solver.Iteration > 1
         minL = sqrt(1+th) * lam0;
-        maxL = 0.5 * norm(ddxf_ - ddx0)/norm(dfdq1 - dfdq0);
+        maxL = norm(ddxf_ - ddx0)/norm(dfdq1 - dfdq0);
         lam1 = clamp(min([minL, maxL]),0,Inf);
     else
         lam0 = 1;
@@ -88,8 +88,8 @@ while norm(Fem.solver.Residual) > Fem.solver.RelTolerance && ...
     dfdq0 = dfdq1;
 end
 
-Fem.solver.Time = clamp(tf + Fem.solver.TimeStep,...
-    0,Fem.solver.TimeHorizon);
+% Fem.solver.Time = clamp(tf + Fem.solver.TimeStep,...
+%     0,Fem.solver.TimeHorizon);
 
 Fem.solver.sol.dx(qa) = dx0 + dt * ((1-gamma)*ddxf + gamma * ddx0);
 Fem.solver.sol.x(qa)  = x0 + dt * dx0 + 0.5 * dt*dt * ((1 - 2*beta)*ddxf + 2 * beta * ddx0);

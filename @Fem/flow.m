@@ -21,6 +21,5 @@ function dz = flow(Fem, t, z, varargin)
     cla;
     showVonMisesFem(Fem);
     drawnow;
-    t
 
 end
