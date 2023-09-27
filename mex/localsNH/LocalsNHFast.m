@@ -51,12 +51,6 @@ for q = 1:length(W)
     % extract shape-functions
     N     = Ns(:,:,q);
     dNdxi = dNdxis(:,:,q);
-    
-    if numel(N) == 3 && Dim == 3
-        T = cross(dNdxi(:,1),dNdxi(:,2));
-        dNdxi = [dNdxi,(T)];
-    end
-    
     J0    = Node0(eNode,:).'*dNdxi;
     dNdx  = dNdxi/J0;
     dJ    = det(J0);
@@ -64,17 +58,17 @@ for q = 1:length(W)
     % deformation gradient   
     F = DeformationGradient(Delta,dNdx,Dim);
     
-    % polar decompostion
-    [Fiso, Fvol, ~] = PolarDecomposition(F);
+    % % polar decompostion
+    % [Fiso, Fvol, ~] = PolarDecomposition(F);
 
-    % % increase robustness low density
-    if abs(dV) > 1e-12
-        Fvol = (1 - dV)^(1/3) * eye(3);
-        Fiso = (1 - dV)^(1/3) * F;
-    end
+    % % % increase robustness low density
+    % if abs(dV) > 1e-12
+    %     Fvol = (1 - dV)^(1/3) * eye(3);
+    %     Fiso = (1 - dV)^(1/3) * F;
+    % end
 
-    % combine F 
-    F = Fiso*Fvol;
+    % % combine F 
+    % F = Fiso*Fvol;
     
     % get internal stress matrix
     [S0, D0, Psi] = PiollaStress(Mu,Lambda,F);
@@ -89,8 +83,8 @@ for q = 1:length(W)
     [Bnl,Bg,NN,tau] = NonlinearStrainOperatorFast(N,dNdx,F);
     
     % local elemental rotation
-    RRe = RRe + Fiso/nn;
-    UUe = UUe + Fvol/nn;
+    % RRe = RRe + Fiso/nn;
+    % UUe = UUe + Fvol/nn;
     
     % internal force vector
     Fe = Fe + tau*W(q)*Bnl.'*Se*dJ;
@@ -212,7 +206,8 @@ UU(:,1) = U(id1(:));
 UU(:,2) = U(id2(:));
 
 if Dim == 2
-    F0 = (UU.') * dNdx;%(dNdx'*UU)';
+    % F0 = zeros(2,2);
+    F0 = (dNdx'*UU)';
     F = [F0(1,1)+1,F0(1,2),0; F0(2,1),F0(2,2)+1,0;0,0,1];
 else
     id3 = round(3:Dim:Dim*nn).';
@@ -312,7 +307,7 @@ if Dim == 2
     G = zeros(4,4);
     D   = [D0(1,1), D0(1,2),       0;
            D0(2,1), D0(2,2),       0;
-                 0,       0, D0(4,4)];
+                 0,       0, D0(6,6)];
     % Dinv2D = inv(D0([1,2,3,6],[1,2,3,6]));
     % D2D    = inv(Dinv2D);
     % D      = D2D([1,2,4],[1,2,4]);
