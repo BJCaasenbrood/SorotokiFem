@@ -3,7 +3,7 @@ function fem = pneunet(varargin)
     p = inputParser;
     % Add optional inputs and default values
     addOptional(p,'dt',1/25);
-    addOptional(p,'n',550);
+    addOptional(p,'n',750);
     addOptional(p,'gravity',0);
     addOptional(p,'contact',0);
 

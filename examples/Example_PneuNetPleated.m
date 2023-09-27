@@ -3,7 +3,7 @@ clr;
 msh = preset.mesh.pneunet;
 
 fem = Fem(msh,'TimeStep',1/55,'BdBox',[-50 120 -100 20]);
-fem = fem.addMaterial(Yeoh(0.1));
+fem = fem.addMaterial(NeoHookean(0.1, 0.33));
 fem = fem.addMaterial(NeoHookean(5., 0.33));
 
 bottomlayer = msh.findElements('box',[0,120,0,4]);

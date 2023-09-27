@@ -1,15 +1,10 @@
 clr;
-W = 150;
-H = 12;
-
-%% generate mesh
+%% generate fem model
 msh = preset.mesh.multigait_crawler;
-
-% %% FEM
-fem = Fem(msh,'TimeStep',1/350,'TimeHorizon',6);
+fem = Fem(msh,'TimeStep',1/1250,'TimeHorizon',6);
 
 mat = NeoHookean(0.2,0.4);
-mat.contact.TangentFriction = 0.5;
+mat.contact.ContactFriction = 0.5;
 
 fem.addMaterial(mat);
 fem.addMaterial(NeoHookean(1,0.4));
@@ -30,13 +25,12 @@ fem = fem.addPressure(fem.findEdges('BoxHole',[50 100 0 15]),...
 fem = fem.addPressure(fem.findEdges('BoxHole',[100 150 0 15]),...
    @(t) pset(t,3));
 
-fem.solver.MaxIteration = 20;
-fem = fem.simulate();
+fem = fem.simulate('RelTolerance',1e-2);
 
 function plt(Fem)
     clf;
     %warning off;
-    showVonMisesFem(Fem);
+    showVonMisesFem(Fem,'LineStyle','-');
     showContactFem(Fem);
     axis([-20 260 -5 50]);
     axis on;
