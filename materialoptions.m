@@ -1,5 +1,5 @@
 function obj = materialoptions
-    obj = namedtuple('Material',{});
+    obj = NamedTuple('Material',{});
     obj.add('NMat',0);
     obj.add('Material',{});
     obj.add('ElemMat',[]);
