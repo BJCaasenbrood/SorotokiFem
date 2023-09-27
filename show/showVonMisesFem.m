@@ -1,7 +1,17 @@
 function h = showVonMisesFem(Fem,varargin)
 
-%Z = full(sparse(Fem.triplets.l,1,Fem.triplets.s(:,1)) ...
-%    ./sparse(Fem.triplets.l,1,Fem.triplets.v));
+for ii = 1:2:length(varargin)
+    if isprop(Fem.options,varargin{ii})
+        Fem.options.(varargin{ii}) = varargin{ii+1};
+    elseif isprop(Fem.solver,varargin{ii})
+        Fem.solver.(varargin{ii}) = varargin{ii+1};
+    elseif isprop(Fem.topology,varargin{ii})
+        Fem.topology.(varargin{ii}) = varargin{ii+1};
+    else
+        Fem.(varargin{ii}) = varargin{ii+1};
+    end
+end
+
 Z = full(sparse(Fem.triplets.l,1,Fem.triplets.s(:,1)));
 
 Nds         = Fem.Mesh.Node + meshfield(Fem, Fem.solver.sol.x);
@@ -14,7 +24,6 @@ end
 
 warning off;
 
-if isempty(varargin)
     h = {};
 
     % if Fem.Dim < 3
@@ -35,12 +44,6 @@ if isempty(varargin)
     axis off; hold on;
     colormap(Fem.options.ColorMap);
     warning on;
-else    
-
-    set(h{2},'Vertices',Nds);
-    set(h{2},'FaceVertexCData',Z);
-
-end
 end
 
 %----------------------------------------------------------- mesh smoothing

@@ -29,7 +29,7 @@ if isempty(varargin)
         Fem.options.LineStyle,'Linewidth', 1.5, 'FaceAlpha', 1,...
         'EdgeColor', 'k');
 
-    axis equal;
+    % axis equal;
     axis off; hold on;
     colormap(Fem.options.ColorMap);
     warning on;
