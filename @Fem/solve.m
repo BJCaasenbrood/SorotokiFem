@@ -47,14 +47,19 @@ else
 end
 
 NSteps = round(Fem.solver.TimeHorizon/Fem.solver.TimeStep);
-if Fem.solver.isLog
-    % progBar = ProgressBar(NSteps,'Title', ' ');
-end
 
 % preallocate solutions
 Fem.solver.sol.yout = zeros(NSteps,Fem.Dim * Fem.Mesh.NNode);
 Fem.solver.sol.tout = zeros(NSteps,1);
 Fem.solver.SubIteration = 1;
+
+% Fem.log.info('Starting implicit Newton-Raphson method');
+% Fem.log.hline();
+
+if Fem.solver.isLog
+    % progBar = Fem.log.progress(NSteps); 
+    disp('|  Iter | Eval |   Residual   |  Time  |  Step  |');
+end
     
 % solves problem over [0, TimeHorizon]
 while Fem.solver.Time < Fem.solver.TimeHorizon
@@ -73,10 +78,7 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         Fem.solver.Iteration < Fem.solver.MaxIteration 
 
         % if Fem.solver.Iteration < 5
-            Fem = Fem.compute();
-        % else
-            % Fem = Fem.compute('full',false);
-        % end
+        Fem = Fem.compute();
 
         % linear solve
         if isempty(Ceq)
@@ -95,7 +97,7 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
 
         if Fem.solver.Iteration > 1
             minL = sqrt(1+th) * lam0;
-            maxL = norm([x1;u1] - [x0;u0])/norm(dfdq1 - dfdq0);
+            maxL = 0.5 * norm([x1;u1] - [x0;u0])/norm(dfdq1 - dfdq0);
             lam1 = clamp(min([minL, maxL]), 1e-6, Inf);
             th   = lam1/lam0;
         else
@@ -118,14 +120,10 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         dfdq0 = dfdq1;
 
         if Fem.solver.isLog
-            if Fem.solver.Iteration == 2,
-                disp(' -----------------------------------------');
-                disp(' |  Iter | Eval |   f(x)   |  Step-size  |');
-                disp(' -----------------------------------------');
-            end
-            s=sprintf(' %5.0f  %5.0f     %5.3e %13.5g    ', ...
-                Fem.solver.SubIteration, Fem.solver.Iteration-1, norm(Fem.solver.Residual),lam1); 
-            disp(s);
+            fprintf(repmat('\b',1,80));
+            s=sprintf(' %5.0f %5.0f %14.2e %9.2g %8.2g', ...
+                Fem.solver.SubIteration, Fem.solver.Iteration-1, norm(Fem.solver.Residual), Fem.solver.Time,lam1); 
+            fprintf(s);
         end
     end
 
@@ -137,8 +135,8 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
     Fem.solver.Time = clamp(Fem.solver.Time + Fem.solver.TimeStep,...
         0,Fem.solver.TimeHorizon);
 
-    if Fem.solver.isLog
-        % progBar([],[],[]);
+    if Fem.solver.isLog && Fem.solver.Time < Fem.solver.TimeHorizon
+        % progBar(step);
     end
 
     if ~isempty(Fem.options.Display)
@@ -147,9 +145,10 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
     end
 end
 
-if Fem.solver.isLog
-    fprintf('\n');
-    % progBar.release();
-end
+% fprintf('\n');
+% Fem.log.hline();
+% Fem.log.info('Generalized Newton-Raphson completed');
+% Fem.log.info('States written to:');
+% Fem.log.list('',{'states = *.solver.sol.yout'});
 
 end

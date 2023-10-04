@@ -1,14 +1,4 @@
-%    This is the file subsolv.m
-%
-function [xmma,ymma,zmma,lamma,xsimma,etamma,mumma,zetmma,smma] = ...
-subsolv(m,n,epsimin,low,upp,alfa,beta,p0,q0,P,Q,a0,a,b,c,d);
-%
-%    Written in May 1999 by
-%    Krister Svanberg <krille@math.kth.se>
-%    Department of Mathematics
-%    SE-10044 Stockholm, Sweden.
-%
-% This function subsolv solves the MMA subproblem:
+% SUBSOLV solves the MMA subproblem:
 %         
 % minimize   SUM[ p0j/(uppj-xj) + q0j/(xj-lowj) ] + a0*z +
 %          + SUM[ ci*yi + 0.5*di*(yi)^2 ],
@@ -19,6 +9,14 @@ subsolv(m,n,epsimin,low,upp,alfa,beta,p0,q0,P,Q,a0,a,b,c,d);
 % Input:  m, n, low, upp, alfa, beta, p0, q0, P, Q, a0, a, b, c, d.
 % Output: xmma,ymma,zmma, slack variables and Lagrange multiplers.
 %
+%    Written in May 1999 by
+%    Krister Svanberg <krille@math.kth.se>
+%    Department of Mathematics
+%    SE-10044 Stockholm, Sweden.
+%
+function [xmma,ymma,zmma,lamma,xsimma,etamma,mumma,zetmma,smma] = ...
+subsolv(m,n,epsimin,low,upp,alfa,beta,p0,q0,P,Q,a0,a,b,c,d);
+
 een = ones(n,1);
 eem = ones(m,1);
 epsi = 1;

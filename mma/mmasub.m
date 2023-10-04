@@ -1,23 +1,11 @@
-%    This is the file mmasub.m
-%
-function [xmma,ymma,zmma,lam,xsi,eta,mu,zet,s,low,upp] = ...
-mmasub(m,n,iter,xval,xmin,xmax,xold1,xold2, ...
-f0val,df0dx,df0dx2,fval,dfdx,dfdx2,low,upp,a0,a,c,d)
-%
-%    Written in May 1999 by
-%    Krister Svanberg <krille@math.kth.se>
-%    Department of Mathematics
-%    SE-10044 Stockholm, Sweden.
-%
-%    This function mmasub performs one MMA-iteration, aimed at
-%    solving the nonlinear programming problem:
+% MMASUB performs one MMA-iteration, aimed at
+%  solving the nonlinear programming problem:
 %         
 %      Minimize  f_0(x) + a_0*z + sum( c_i*y_i + 0.5*d_i*(y_i)^2 )
 %    subject to  f_i(x) - a_i*z - y_i <= 0,  i = 1,...,m
 %                xmin_j <= x_j <= xmax_j,    j = 1,...,n
 %                z >= 0,   y_i >= 0,         i = 1,...,m
-%*** INPUT:
-%
+% Input:
 %   m    = The number of general constraints.
 %   n    = The number of variables x_j.
 %  iter  = Current iteration number ( =1 the first time mmasub is called).
@@ -55,7 +43,7 @@ f0val,df0dx,df0dx2,fval,dfdx,dfdx2,low,upp,a0,a,c,d)
 %  c     = Column vector with the constants c_i in the terms c_i*y_i.
 %  d     = Column vector with the constants d_i in the terms 0.5*d_i*(y_i)^2.
 %     
-%*** OUTPUT:
+% OUTPUT:
 %
 %  xmma  = Column vector with the optimal values of the variables x_j
 %          in the current MMA subproblem.
@@ -74,6 +62,16 @@ f0val,df0dx,df0dx2,fval,dfdx,dfdx2,low,upp,a0,a,c,d)
 %  upp   = Column vector with the upper asymptotes, calculated and used
 %          in the current MMA subproblem.
 %
+%
+%    Written in May 1999 by
+%    Krister Svanberg <krille@math.kth.se>
+%    Department of Mathematics
+%    SE-10044 Stockholm, Sweden.
+%
+function [xmma,ymma,zmma,lam,xsi,eta,mu,zet,s,low,upp] = ...
+mmasub(m,n,iter,xval,xmin,xmax,xold1,xold2, ...
+f0val,df0dx,df0dx2,fval,dfdx,dfdx2,low,upp,a0,a,c,d)
+
 epsimin = sqrt(m+n)*10^(-9);
 feps = 0.000001;
 asyinit = 0.5;

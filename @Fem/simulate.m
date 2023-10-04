@@ -24,7 +24,7 @@ for ii = 1:2:length(varargin)
     end
 end
 
-rho = 0;  % must betwween [0,1]
+rho = 0;  % must between [0,1]
 alphaM = (2*rho - 1)/(rho + 1);
 alphaF = (rho)/(rho + 1);
 
@@ -36,24 +36,42 @@ if ~isfield(Fem.system,'Ia')
     Fem.system.Ia = 1:Fem.Dim * Fem.Mesh.NNode;
 end
 
-if Fem.solver.isLog
-    NSteps = round(Fem.solver.TimeHorizon/Fem.solver.TimeStep);
-    % progBar = ProgressBar(NSteps,'Title', ' ');
-end
-
+% Fem.log.info('Retreiving free Dofs');
 qa = Fem.system.Ia; 
+% Fem.log.list('',{['DOFs  = ' num2str(numel(qa))], ...
+%     ['NNode = ' num2str(Fem.Mesh.NNode)], ...
+%     ['NElem = ' num2str(Fem.Mesh.NElem)]});
 
 if ~isfield(Fem.solver.sol,'ddx')
 
     Fem.solver.sol.ddx = Fem.solver.sol.dx * 0;
+    Fem.log.info('Prebuild FEM model');
     Fem = Fem.compute();
 
     A = Fem.system.Mass;
     b = -Fem.system.fResidual - Fem.system.Damping * ...
         Fem.solver.sol.dx(qa);
 
+    Fem.log.info('Solving initial accelerations');
     Fem.solver.ddx(qa) = A \ b;
 end
+
+NSteps = round(Fem.solver.TimeHorizon/Fem.solver.TimeStep);
+
+% preallocate solutions
+Fem.solver.sol.yout = zeros(NSteps,Fem.Dim * Fem.Mesh.NNode);
+Fem.solver.sol.tout = zeros(NSteps,1);
+Fem.solver.SubIteration = 1;
+
+% NSteps = round(Fem.solver.TimeHorizon/Fem.solver.TimeStep);
+% Fem.log.info('Starting generalized alpha implicit method');
+% Fem.log.hline();
+
+if Fem.solver.isLog
+    % progBar = Fem.log.progress(NSteps); 
+    disp('|  Iter | Eval |   Residual   |  Time  |  Step  |');
+end
+        
 
 while Fem.solver.Time < Fem.solver.TimeHorizon
 
@@ -110,22 +128,22 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
         ddx0  = ddx0 - lam1 * dfdq1;
         dfdq0 = dfdq1;
 
-
         if Fem.solver.isLog
-            if Fem.solver.Iteration == 2,
-                disp(' -----------------------------------------');
-                disp(' |  Iter | Eval |   f(x)   |  Step-size  |');
-                disp(' -----------------------------------------');
-            end
-            s=sprintf(' %5.0f  %5.0f     %5.3e %13.5g    ', ...
-                Fem.solver.SubIteration, Fem.solver.Iteration-1, norm(Fem.solver.Residual),lam1); 
-            disp(s);
+            fprintf(repmat('\b',1,80));
+            s=sprintf(' %5.0f %5.0f %14.2e %9.2g %8.2g', ...
+                Fem.solver.SubIteration, Fem.solver.Iteration-1, norm(Fem.solver.Residual), Fem.solver.Time,lam1); 
+            fprintf(s);
         end
-
     end
 
+    % allocate mid-solutions to solution vector
+    step = Fem.solver.SubIteration;
+    Fem.solver.sol.yout(step,:) = Fem.solver.sol.x;
+    Fem.solver.sol.tout(step)   = Fem.solver.Time;
+    Fem.solver.SubIteration = Fem.solver.SubIteration + 1;    
+
     % if Fem.solver.isLog
-    %     progBar([], [], []);
+    %     % progBar(step);
     % end
 
     Fem.solver.Time = clamp(tf + Fem.solver.TimeStep,...
@@ -140,9 +158,9 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
     end
 end
 
-% if Fem.solver.isLog
-%     progBar.release();
-%     fprintf('\n');
-% end
+% Fem.log.hline();
+% Fem.log.info('Generalized alpha simulation completed');
+% Fem.log.info('State trajectories written to:');
+% Fem.log.list('',{'time =   *.solver.sol.tout','states = *.solver.sol.yout'});
 
 end

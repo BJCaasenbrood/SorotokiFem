@@ -1,15 +1,10 @@
 function Fem = compute(Fem,varargin)
 
-    p = inputParser;
-    addOptional(p,'full',true);
-    parse(p,varargin{:});
+    % p = inputParser;
+    % addOptional(p,'full',true);
+    % parse(p,varargin{:});
 
-    if p.Results.full
-        Fem = assembleGlobalFem(Fem);
-    else
-        Fem = assemblePartialFem(Fem);
-    end
-    
+    Fem = assembleGlobalFem(Fem);
     Fem = assembleBoundaryFem(Fem);
     
     Fem.system.fResidual = Fem.system.fElastic + Fem.system.fDamping ... 

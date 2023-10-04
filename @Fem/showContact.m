@@ -1,7 +1,7 @@
 function h = showContact(Fem)
 
-    sdf    = Fem.system.Contact{1};
-    BD     = Fem.BdBox;
+    sdf = Fem.system.Contact{1};
+    BD  = Fem.BdBox;
 
     [px,py] = meshgrid(linspace(BD(1),BD(2),80),...
                        linspace(BD(3),BD(4),80));

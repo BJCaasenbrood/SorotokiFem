@@ -11,8 +11,8 @@ function [Fe,Fb,Qe,Me,Ce,Ke,Kte,Svme,SS,EE,Te,Ve,Vge,Tke,Re,Ue] = ...
         Zeta,...  % dampings
         Grav,...  % gravity
         Mu,...     
-        Lambda...
-        )
+        Lambda)
+        
 % get order
 nn = length(eNode);
 mm = Dim;
@@ -58,17 +58,17 @@ for q = 1:length(W)
     % deformation gradient   
     F = DeformationGradient(Delta,dNdx,Dim);
     
-    % % polar decompostion
-    % [Fiso, Fvol, ~] = PolarDecomposition(F);
+    % polar decompostion
+    [Fiso, Fvol, ~] = PolarDecomposition(F);
 
-    % % % increase robustness low density
-    % if abs(dV) > 1e-12
-    %     Fvol = (1 - dV)^(1/3) * eye(3);
-    %     Fiso = (1 - dV)^(1/3) * F;
-    % end
+    % % increase robustness low density
+    if abs(dV) > 1e-12
+        Fvol = (1 - dV)^(1/3) * eye(3);
+        Fiso = (1 - dV)^(1/3) * F;
+    end
 
-    % % combine F 
-    % F = Fiso*Fvol;
+    % combine F 
+    % F = Fiso * Fvol;
     
     % get internal stress matrix
     [S0, D0, Psi] = PiollaStress(Mu,Lambda,F);
@@ -206,9 +206,8 @@ UU(:,1) = U(id1(:));
 UU(:,2) = U(id2(:));
 
 if Dim == 2
-    % F0 = zeros(2,2);
     F0 = (dNdx'*UU)';
-    F = [F0(1,1)+1,F0(1,2),0; F0(2,1),F0(2,2)+1,0;0,0,1];
+    F = [F0(1,1)+1,F0(1,2),0; F0(2,1), F0(2,2)+1,0;0,0,1];
 else
     id3 = round(3:Dim:Dim*nn).';
     UU(:,3) = U(id3);
@@ -306,11 +305,13 @@ function [S, D, G] = IsotropicReduction(D0,S0,Dim)
 if Dim == 2
     G = zeros(4,4);
     D   = [D0(1,1), D0(1,2),       0;
-           D0(2,1), D0(2,2),       0;
-                 0,       0, D0(6,6)];
+           D0(1,2), D0(2,2),       0;
+                 0,       0, D0(4,4)];
+
     % Dinv2D = inv(D0([1,2,3,6],[1,2,3,6]));
     % D2D    = inv(Dinv2D);
     % D      = D2D([1,2,4],[1,2,4]);
+
     SIG = [S0(1), S0(4); S0(4), S0(2)];
     S   = [S0(1); S0(2); S0(4)]; 
     

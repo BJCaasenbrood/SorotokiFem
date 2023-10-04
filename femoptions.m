@@ -2,7 +2,6 @@ classdef femoptions
     
     properties
         BdBox;
-        Dimension;
         Color;
         ColorMap;
         ColorAxis;
@@ -18,8 +17,7 @@ classdef femoptions
         function obj = femoptions
             %SDFOPTIONS Construct an instance of this class
             %   Detailed explanation goes here
-            obj.Dimension       = 2;
-            obj.Color           = [0.8329 0.8329 0.8329];
+            obj.Color           = mean(cmap_barney,1);
             obj.ColorMap        = cmap_turbo;
             obj.Display         = @plt;
             obj.ColorAxis       = [];
@@ -33,9 +31,6 @@ classdef femoptions
 end
 
 function plt(Fem)
-    % h = Fem.Mesh;
-    % h.Node = Fem.Mesh.Node + meshfield(Fem, Fem.solver.sol.x);
-    % h.show();
     cla;
     showVonMisesFem(Fem);
     axis(boxhull(Fem.Mesh.Node + meshfield(Fem, Fem.solver.sol.x)));

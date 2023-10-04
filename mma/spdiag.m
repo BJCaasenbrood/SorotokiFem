@@ -1,4 +1,3 @@
-function [res1,res2] = spdiag(arg1,arg2,arg3,arg4)
 %SPDIAGS Sparse matrix formed from diagonals.
 %   SPDIAGS, which generalizes the function "diag", deals with three
 %   matrices, in various combinations, as both input and output.
@@ -42,6 +41,7 @@ function [res1,res2] = spdiag(arg1,arg2,arg3,arg4)
 %   Rob Schreiber
 %   Copyright 1984-2019 The MathWorks, Inc.
 
+function [res1,res2] = spdiag(arg1,arg2,arg3,arg4)
 
 if nargin <= 2
     % Extract diagonals

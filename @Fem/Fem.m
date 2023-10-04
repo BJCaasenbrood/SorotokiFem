@@ -2,6 +2,7 @@ classdef Fem < handle
     
     properties (Access = public)
         Mesh;
+        log;
         materials;
         options;
         solver;
@@ -11,188 +12,11 @@ classdef Fem < handle
 
         Dim;           % Dimension (2/3)
         BdBox;          % Bounding box of FEM
-        % Mesh;         % Mesh class
-        % Material;     % Material class
-        % Density;      % Density field (Topology)
-        % Node;         % Vertices/Nodes
-        % Element;      % Elements
-        % Center;       % Element centers
-        % NNode;        % Number of nodes
-        % NElem;        % Number of elements
-        % Topology;     % current save of topology
-        % Log;          % Log structure
-        % Time;         % Time (solver)
-        % Flow;         % auxilary flow function
-        % Contraction;  % list of elemental contractions
-        % Thickness;    % thickness for 2D fem
-        % 
-        % Utmp = 0;     % Temporay node diplacements
-        % Ftmp = 0;     % Temporay node forces
+
     end
     
     properties (Access = public, Hidden = true)
-        % Node0;         % list of nodes in reference configuration
-        % Center0;       % list of element centers in reference configuration
-        % Support;       % list of boundary conditions (i.e., supports)
-        % Load;          % list of applied forces
-        % Tendon;        % list of applied follower forces (i.e., tendons)
-        % Spring;        % list of sping attachments to nodes
-        % Output;        % list of nodes that are logged
-        % Pressure;      % list of edges subjected to pressures
-        % PressureCell;  % list of elements undergoing volumetric expansion
-        % Contact;       % SDF contact function
-        % Source;        
-        % 
-        % ElemNDof;      % Degrees-of-freedom of elements
-        % ElemSort;      % Elements in sorted list
-        % ElemRot;       % Rotation mat. each element
-        % ElemStr;       % Stretch vector each element
-        % Normal;        % Normals of each elements
-        % Edge;          % Cell of edges/boundaries
-        % Rotation;      % F = RQ: rotational part
-        % Stretch;       % F = RQ: stretch part
-        % 
-        % PrescribedDisplacement = false;
-        % VolumetricPressure     = false;
-        % TendonForces           = false;
-        % GravityRamp            = true;
-        % 
-        % VonMisesNodal; 
-        % sxxNodal; syyNodal; sxyNodal;
-        % exxNodal; eyyNodal; exyNodal;
-        % fxNodal;  fyNodal;
-        % rotNodal;
-        % 
-        % SPxyNodal;
-        % Potential;
-        % PotentialG;
-        % PotentialF;
-        % Kinetic;
-        % Gravity;
-        % 
-        % fContact  = rand(1)*1e-16;
-        % fTangent  = rand(1)*1e-16;
-        % fInternal = rand(1)*1e-16;
-        % fExternal = rand(1)*1e-16;
-        % fInput    = rand(1)*1e-16;
-        % 
-        % Stiffness; 
-        % TangentStiffness;
-        % SecantStiffness;
-        % MassMatrix;
-        % DampingMatrix;
-        % 
-        % Residual = Inf;
-        % 
-        % TimeEnd      = 1.0;
-        % TimeStep     = 0.1;
-        % TimeStep0    = 0.1;
-        % TimeDelta    = 0;
-        % TimeStepMin  = 1e-3;
-        % EndIncrement;
-        % LoadingFactor;
-        % SigmoidFactor;
-        % ShowProcess;
-        % 
-        % ResidualNorm = 1e-3;
-        % StressNorm   = 1e-4;
-        % DisplaceNorm = 1e-9;
-        % Objective    = 1e-4;
-        % Constraint   = 1e-4;
-        % 
-        % Type     = 'PlaneStrain'
-        % Solver   = 'mr';
-        % SolverId;
-        % 
-        % IterationMMA = 1;
-        % Iteration    = 1;
-        % Increment    = 1;
-        % Divergence   = 0;
-        % Filter       = (1/5); 
-        % ShapeFnc;
-        % 
-        % U        = 0;
-        % 
-        % dUtmp    = 0;
-        % ddUtmp   = 0;
-        % Ptmp     = 0;
-        % dPtmp    = 0;
-        % ddPtmp   = 0;
-        % Utmp_    = 0;
-        % Ptmp_    = 0;
-        % dUtmp_   = 0;
-        % ddUtmp_  = 0;
-        % Z0       = 0;
-        % 
-        % PlTmp = 0;
-        % 
-        % MaxIteration     = 500;
-        % MaxIterationMMA  = 50;
-        % SolverStart      = false;
-        % SolverStartMMA   = false;
-        % SolverPlot       = true;
-        % SolverPlotType   = 'Svm';
-        % QuivPlotContact  = false;
-        % Assemble         = false;
-        % Convergence      = false; 
-        % Nonlinear        = true;
-        % BisectLimit      = 15;
-        % BisectCounter    = 1;
-        % AssembledSystem  = false;
-        % PressureLoad     = 0;
-        % ParasiticStates  = [];
-        % 
-        % Linestyle   = '-';
-        % Linestyle0  = '-';
-        % Colormap    = cmap_turbo;
-        % ColormapOpt = cmap_barney(-1);
-        % ColorAxis   = [];
-        % I3 = eye(3); 
-        % O3 = zeros(3);
-        % i; j; m; fi; t; e; c; s; p; v; l; k; fb; ed; fb0; ft;
-        % 
-        % SolverResidual = 1e7;
-        % SolverVonMises = 1e7;
-        % SolverDisplace = 1e7;
-        % 
-        % InformationBoolean = false;
-        % 
-        % Movie        = false;
-        % MovieStart   = false;
-        % MovieAxis; 
-        % MovieCAxis;
-        % 
-        % VolumeInfill = 0.3;
-        % Ersatz       = 1e-3; 
-        % Penal        = 1;
-        % PenalMax     = 4;
-        % PenalStep    = 10;
-        % ChangeMax    = 0.03;
-        % Beta         = 1.5;
-        % FilterRadius = 0.5;
-        % SpatialFilter;
-        % 
-        % OptFactor             = 1;
-        % OptimizationSolver    = 'MMA';
-        % MaterialInterpolation = 'SIMP';
-        % OptimizationProblem   = 'Compliance';
-        % xold1; xold2; upp; low; fnorm;
-        % zMin = 0; zMax = 1;
-        % OutputVector; Change; dFdE;
-        % Periodic;
-        % 
-        % VoidTolerance = 0.05*6; 
-        % 
-        % Crop;
-        % Reflect;
-        % NumGridX; NumGridY;
-        % Grid; Grideval;
-        % Obj = rand(1)*1e-8;
-        % Con = rand(1)*1e-8;
-        % 
-        % TopologyGridX; TopologyGridY; TopologyGridZ;
-        % TopologyGapFill;
-        % Repeat; ReflectionPlane; CellRepetion;
+
     end
     
 %--------------------------------------------------------------------------
@@ -200,6 +24,7 @@ methods
 %---------------------------------------------------------------- Fem Class
 function obj = Fem(Mesh,varargin) 
 
+    obj.log       = Log;
     obj.options   = femoptions;
     obj.topology  = topooptions;
     obj.solver    = solveroptions;
@@ -254,12 +79,6 @@ end
 %---------------------------------------------------------------------- set
 function Fem = set(Fem,varargin)
 Fem = vararginParser(Fem,varargin);
-% for ii = 1:2:length(varargin)
-%     Fem.(varargin{ii}) = varargin{ii+1};
-%     if strcmpi(varargin{ii},'FilterRadius') % regenerate filter
-%         Fem.topology.SpatialFilter = GenerateRadialFilter(Fem,varargin{ii+1});
-%     end
-% end
 end
 %--------------------------------------------------------------- find nodes
 function NodeList = findNodes(Fem,varargin)
@@ -317,9 +136,9 @@ function Fem = addDilation(Fem,varargin)
     Fem = addDilationFem(Fem,varargin{1:end});
    end
 %---------------------------------------------- add volumetric contraction
-function Fem = addContraction(Fem,varargin)
-    Fem.Contraction = varargin{1};
-end
+% function Fem = addContraction(Fem,varargin)
+%     Fem.Contraction = varargin{1};
+% end
 %-------------------------------------- add tendon force or follower force
 function Fem = addTendon(Fem,varargin)
     if isa(varargin{1},'char')
