@@ -95,8 +95,8 @@ classdef FemTest < matlab.unittest.TestCase
             testCase.verifyClass(fem,'Fem');
 
             fem = fem.eigen();
-            testCase.verifyNotEmpty(fem.solver.pod.V);
-            testCase.verifyNotEmpty(fem.solver.pod.D);
+            testCase.verifyNotEmpty(fem.solver.sol.pod.V);
+            testCase.verifyNotEmpty(fem.solver.sol.pod.D);
         end
 
         function testSimulate(testCase)
