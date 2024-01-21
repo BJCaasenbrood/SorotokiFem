@@ -113,7 +113,7 @@ while Fem.solver.Time < Fem.solver.TimeHorizon
 
         if Fem.solver.Iteration > 1
             minL = sqrt(1+th) * lam0;
-            maxL = norm(ddxf_ - ddx0)/norm(dfdq1 - dfdq0);
+            maxL = 0.5 * norm(ddxf_ - ddx0)/norm(dfdq1 - dfdq0);
             lam1 = clamp(min([minL, maxL]),0,Inf);
         else
             lam0 = 1;

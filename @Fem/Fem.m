@@ -12,7 +12,6 @@ classdef Fem < handle
 
         Dim;           % Dimension (2/3)
         BdBox;          % Bounding box of FEM
-
     end
     
     properties (Access = public, Hidden = true)
@@ -165,10 +164,10 @@ function Fem = addContact(Fem,varargin)
 end
 %------------------------------------------------- add output list for LOG
 function Fem = addOutput(Fem,varargin)
- if isa(varargin{1},'char')
-     varargin{1} = Fem.FindNodes(varargin{1});
- end   
- Fem = AddConstraint(Fem,'Output',varargin{1:end});
+if isa(varargin{1},'char')
+    varargin{1} = findNodeMesh(Fem.Mesh.Node,varargin{1});
+end 
+Fem = addConstraintFem(Fem,'Output',varargin{1:end});
 end
 %----------------------------------------------- add parastic displacements
 function Fem = addParastic(Fem,varargin)

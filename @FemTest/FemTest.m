@@ -77,6 +77,28 @@ classdef FemTest < matlab.unittest.TestCase
             testCase.verifyNotEmpty(fem.solver.sol.yout);
         end
 
+        function testEigen(testCase)
+            sdf = sRectangle(10, 5);
+            msh = Mesh(sdf,'NElem',30);
+            msh = msh.generate();
+
+            fem = Fem(msh,'TimeStep',0.1);
+            fem = fem.addMaterial( NeoHookean );
+            fem = fem.addSupport('left', [1, 1]);
+            fem = fem.addSupport('right',[1, 1]);
+            fem = fem.addLoad('bottom', [0, 5e-4]);
+
+            fem.options.Display = [];
+            fem.solver.isLog = false;
+
+            fem = fem.solve();
+            testCase.verifyClass(fem,'Fem');
+
+            fem = fem.eigen();
+            testCase.verifyNotEmpty(fem.solver.pod.V);
+            testCase.verifyNotEmpty(fem.solver.pod.D);
+        end
+
         function testSimulate(testCase)
             sdf = sRectangle(10, 3);
             msh = Mesh(sdf,'Quads',[10,3]);
@@ -93,6 +115,47 @@ classdef FemTest < matlab.unittest.TestCase
             fem = fem.simulate();
             testCase.verifyNotEmpty(fem.solver.sol.tout);
             testCase.verifyNotEmpty(fem.solver.sol.yout);
+        end
+
+        function testOptCompliance(testCase)
+            msh = Mesh(sRectangle(10, 2),'Quads',[50,10]);
+            msh = msh.generate();
+
+            fem = Fem(msh,'SpatialFilterRadius',0.3);
+
+            fem = fem.addMaterial(NeoHookean);
+            fem = fem.addSupport('se',[1, 1]);
+            fem = fem.addSupport('sw',[1, 1]);
+            fem = fem.addLoad('bottommid',[0,1]);
+
+            fem.solver.isLog = false;
+            fem.options.isNonlinear = false;
+            fem.topology.MaxIteration = 15;
+            fem.options.Display = [];
+
+            fem = fem.optimize;
+            testCase.verifyNotEmpty(fem.topology.sol.x);
+        end
+
+        function testOptCompliant(testCase)
+            msh = Mesh(sRectangle(10, 10),'Quads',[55,55]);
+            msh = msh.generate();
+
+            fem = Fem(msh,'SpatialFilterRadius',0.3);
+
+            fem = fem.addMaterial(NeoHookean);
+            fem = fem.addSupport('nw',[1, 1]);
+            fem = fem.addSupport('sw',[1, 1]);
+            fem = fem.addLoad('leftmid',[-1,0]);
+            fem = fem.addOutput('rightmid',[1,0]);
+
+            fem.topology.Type = 'compliant';
+            fem.options.isNonlinear = false;
+            fem.options.Display = [];
+            fem.topology.MaxChange = 0.15;
+            fem.topology.MaxIteration = 15;
+            fem = fem.optimize;
+            testCase.verifyNotEmpty(fem.topology.sol.x);
         end
     end
 end

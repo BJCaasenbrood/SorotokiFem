@@ -64,10 +64,20 @@ elseif isfield(Fem.system,'fControl') && ~isfield(Fem.system,'Controller')
     Fc = G * Fem.system.fControl;
 end
 
-%
+% adding output
+if isfield(Fem.system,'Output') && ~Fem.options.isPrescribed
+    L = assembleOutputFem(Fem);
+    kdof = find(L ~= 0);
+    fdof = find(F ~= 0);
+    ok = find(Fem.triplets.i == kdof);
+    fk = find(Fem.triplets.i == fdof);
+    Fem.triplets.k(ok) = Fem.topology.OutputStiffness;
+    Fem.triplets.k(fk) = Fem.topology.InputStiffness;
+end
+
 Fem.system.fContact = Fnc(qa);
 Fem.system.fTangent = Ftc(qa);
 Fem.system.fInput   = F(qa) + Ft(qa) + Fnc(qa) + Ftc(qa) + Fc(qa);
-Fem.system.Output   = L;
+Fem.system.fOutput  = L;
 end
 

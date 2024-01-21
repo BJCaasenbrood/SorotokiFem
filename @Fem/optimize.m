@@ -14,16 +14,15 @@ A    = 0;
 C    = 10000; 
 D    = 0;
 
-%Fem.solver.Time = 0;
-%qa = Fem.system.Ia;
-
 assert(Fem.materials.NMat == 1, 'Currently, single material optimization is only supported.');
 
 x0 = Fem.topology.sol.x;
 x1 = Fem.topology.sol.x;
 x2 = Fem.topology.sol.x;
 
-progBar = ProgressBar(Fem.topology.MaxIteration,'Title', ' ');
+if Fem.solver.isLog
+    progBar = ProgressBar(Fem.topology.MaxIteration,'Title', ' ');
+end
 
 while Fem.topology.Iteration <= Fem.topology.MaxIteration
         
@@ -61,7 +60,7 @@ while Fem.topology.Iteration <= Fem.topology.MaxIteration
 
         Fem.topology.sol.x     = x0;
         Fem.topology.Iteration = Fem.topology.Iteration + 1;
-        Fem.topology.Penal = clamp(Fem.topology.Penal +  ...
+        Fem.topology.Penal     = clamp(Fem.topology.Penal +  ...
             Fem.topology.PenalStep, 0, Fem.topology.MaxPenal);
 
         if ~isempty(Fem.options.Display)
@@ -69,10 +68,14 @@ while Fem.topology.Iteration <= Fem.topology.MaxIteration
             drawnow;
         end
 
-        progBar([], [], []);
+        if Fem.solver.isLog
+            progBar([], [], []);    
+        end
 end
 
-progBar.release();
-fprintf('\n');
+if Fem.solver.isLog
+    progBar.release();
+    fprintf('\n');
+end
 
 end

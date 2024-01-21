@@ -83,8 +83,8 @@ for q = 1:length(W)
     [Bnl,Bg,NN,tau] = NonlinearStrainOperatorFast(N,dNdx,F);
     
     % local elemental rotation
-    % RRe = RRe + Fiso/nn;
-    % UUe = UUe + Fvol/nn;
+    RRe = RRe + Fiso/nn;
+    UUe = UUe + Fvol/nn;
     
     % internal force vector
     Fe = Fe + tau*W(q)*Bnl.'*Se*dJ;

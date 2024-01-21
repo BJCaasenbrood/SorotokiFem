@@ -14,6 +14,8 @@ classdef topooptions
         Objective;
         Constraint;
         Interpolation;
+        InputStiffness;
+        OutputStiffness;
         Periodic;
         Penal;
         MaxPenal;
@@ -40,6 +42,8 @@ classdef topooptions
             obj.Iteration    = 1;
             obj.MaxIteration = 25;
             obj.ColorMap     = cmap_barney(-1);
+            obj.InputStiffness  = 0.1;
+            obj.OutputStiffness = 0.1;
         end
     end
 end

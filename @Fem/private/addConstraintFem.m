@@ -47,7 +47,7 @@ for ii = 1:3:length(varargin)
         % else
 
         if strcmpi(varargin{ii},'support') || strcmpi(varargin{ii},'load') || ...
-           strcmpi(varargin{ii},'tendon')
+           strcmpi(varargin{ii},'tendon') || strcmpi(varargin{ii},'output')
             
              BC = [varargin{ii+1},repmat(transpose(varargin{ii+2}(:)),...
                  [length(varargin{ii+1}),1])];
@@ -57,7 +57,6 @@ for ii = 1:3:length(varargin)
                 Fem.system.(varargin{ii}) = BC;
              end
         end
-        % end
     else
         warning([varargin{ii}, ' has incorrect input'] );
     end
