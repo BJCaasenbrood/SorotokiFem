@@ -11,6 +11,8 @@ classdef femoptions
         isAssembled;
         loadingFactor;
         isPrescribed;
+        VoidTolerance;
+        isForceContactDamping;
     end
     
     methods
@@ -26,6 +28,9 @@ classdef femoptions
             obj.isAssembled     = false;
             obj.loadingFactor   = 1;
             obj.isPrescribed    = false;
+            obj.VoidTolerance   = 0.3;
+            
+            obj.isForceContactDamping = false;
         end
     end
 end

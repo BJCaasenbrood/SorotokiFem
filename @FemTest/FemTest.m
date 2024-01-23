@@ -157,5 +157,47 @@ classdef FemTest < matlab.unittest.TestCase
             fem = fem.optimize;
             testCase.verifyNotEmpty(fem.topology.sol.x);
         end
+
+        function testFloodFill(testCase)
+
+            sdf = sRectangle(10,10);
+            msh = Mesh(sdf,'NElem',90);
+            msh = msh.generate();
+
+            set = sCircle(3, [5,5]);
+            I = find(set.intersect(msh.Center));
+
+            fem = Fem(msh);
+            
+            % overwrite densities
+            fem.topology.sol.x(I) = 0.1;
+            fem = fem.addMyocyte(I(1), 1e-8);
+            out = fem.doFloodFill();
+
+            testCase.verifyEqual(sort(out(:)), sort(I(:)));
+        end
+
+        function testFloodFillQuads(testCase)
+
+            sdf = sRectangle(10,10);
+            msh = Mesh(sdf,'Quads',[9,9]);
+            msh = msh.generate();
+
+            I = [11; 12; 13; 15; 16; 17;
+                31; 32; 33; 38; 39; 40; 41; 42; 43; 44; 
+                49; 50; 51; 65; 66; 67; 69; 70; 71];
+
+            I2 = [31; 32; 33; 38; 39; 40; 41; 42; 43; 44; 
+            49; 50; 51];                
+
+            fem = Fem(msh);
+            
+            % overwrite densities
+            fem.topology.sol.x(I) = 0.1;
+            fem = fem.addMyocyte(41, 1e-8);
+            out = fem.doFloodFill();
+
+            testCase.verifyEqual(sort(out(:)), sort(I2(:)));
+        end
     end
 end

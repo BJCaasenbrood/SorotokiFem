@@ -3,6 +3,7 @@ function [f,dfdE,dfdV] = assembleTopoObjective(Fem)
 X      = Fem.solver.sol.x;
 fDof   = Fem.system.FreeDofs;
 qa     = Fem.system.Ia;
+
 E = materialFieldFem(Fem);
 % [E,dEdy,~,dVdy] = materialFieldFem(Fem);
 

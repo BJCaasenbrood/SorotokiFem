@@ -2,8 +2,8 @@ function F = assembleMyocyteFem(Fem)
 
 F     = sparse(Fem.Mesh.NNode*Fem.Dim,1);   
 NLoad = size(Fem.system.Load,1);
-W  = ones(Fem.NElem,1);
-Ft = beta*sparse(Fem.i,1,W(Fem.e).*Fem.ft);
+W     = ones(Fem.NElem,1);
+Ft    = beta * sparse(Fem.i,1, W(Fem.e) .* Fem.ft);
 
 for ii = 1:NLoad
 

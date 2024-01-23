@@ -1,4 +1,4 @@
-function F = addBasicLoadsFem(Fem)
+function F = assemblePressureForces(Fem)
 
     F = sparse(Fem.Mesh.NNode*Fem.Dim,1);   
     Nds = Fem.Mesh.Node;

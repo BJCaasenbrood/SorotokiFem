@@ -52,7 +52,7 @@ for ii = 1:3:length(varargin)
              BC = [varargin{ii+1},repmat(transpose(varargin{ii+2}(:)),...
                  [length(varargin{ii+1}),1])];
              if isfield(Fem.system, varargin{ii})
-                Fem.system.(varargin{ii}) = [Fem.system.(varargin{ii});BC];
+                Fem.system.(varargin{ii}) = [Fem.system.(varargin{ii}); BC];
              else
                 Fem.system.(varargin{ii}) = BC;
              end

@@ -10,8 +10,8 @@ classdef Fem < handle
         triplets;
         topology;
 
-        Dim;           % Dimension (2/3)
-        BdBox;          % Bounding box of FEM
+        Dim;   % Dimension (2/3)
+        BdBox; % Bounding box of FEM
     end
     
     properties (Access = public, Hidden = true)
@@ -105,35 +105,6 @@ function Fem = addDisplace(Fem,varargin)
  end   
  Fem = addDisplaceFem(Fem,varargin{1:end});
 end
-%-------------------------------------------------------------- add gravity
-function Fem = addGravity(Fem,varargin)
- if isempty(varargin)
-    if Fem.Dim == 2
-        varargin{1} = [0,-9.81e3].';
-    else
-        varargin{1} = [0,0,-9.81e3].'; 
-    end
- end
- Fem = addGravityFem(Fem,[],varargin{1:end});
-end
-%-------------------------------------------------------- add pressure load
-function Fem = addPressure(Fem,varargin)
- if isa(varargin{1},'char')
-     varargin{1} = Fem.Mesh.findEdges(varargin{1});
- elseif isempty(varargin{1})
-     varargin{1} = Fem.Mesh.findEdges('Hole');
- end   
- Fem = addPressureFem(Fem,varargin{1:end});
-end
-%------------------------------------------ add myocyte muscle activiation
-function Fem = addDilation(Fem,varargin)
-    if isa(varargin{1},'char')
-        varargin{1} = Fem.Mesh.findElements(varargin{1});
-    elseif isempty(varargin{1})
-        error('Please assign elements for dilation.');
-    end   
-    Fem = addDilationFem(Fem,varargin{1:end});
-   end
 %---------------------------------------------- add volumetric contraction
 % function Fem = addContraction(Fem,varargin)
 %     Fem.Contraction = varargin{1};
@@ -144,30 +115,6 @@ function Fem = addTendon(Fem,varargin)
         varargin{1} = findNodeMesh(Fem.Mesh.Node,varargin{1});
     end
     Fem = addConstraintFem(Fem,'Tendon',varargin{1:end});
-end
-%------------------------------------------------ add contact SDF function
-function Fem = addContact(Fem,varargin)
- if isa(varargin{1},'Sdf')
-     sdf = varargin{1};
-     varargin{1} = @(x) sdf.eval(x);
-     B1 = box2node(sdf.BdBox); 
-     B2 = box2node(Fem.BdBox);
-     Fem.BdBox = boxhull([B1;B2],mean(abs(Fem.BdBox))/1e1);
-     Fem.system.ContactSDF = sdf;
- end
-    
- if numel(varargin) < 2
-     varargin{2} = [0,0]; 
- end
- 
- Fem = addContactFem(Fem,varargin{1:end});
-end
-%------------------------------------------------- add output list for LOG
-function Fem = addOutput(Fem,varargin)
-if isa(varargin{1},'char')
-    varargin{1} = findNodeMesh(Fem.Mesh.Node,varargin{1});
-end 
-Fem = addConstraintFem(Fem,'Output',varargin{1:end});
 end
 %----------------------------------------------- add parastic displacements
 function Fem = addParastic(Fem,varargin)

@@ -8,10 +8,9 @@ Fc  = sparse(Fem.Mesh.NNode*Fem.Dim,1);  % init global force vector
 F   = sparse(Fem.Mesh.NNode*Fem.Dim,1);  % init global force vector
 L   = sparse(Fem.Dim*Fem.Mesh.NNode,1);  % init output vector
 
+beta = 1.0; % loading increment parameter
 if Fem.options.isNonlinear && ~isempty(Fem.options.loadingFactor)
     beta = Fem.options.loadingFactor;
-else
-    beta = 1;
 end
 
 % adding basic loads
@@ -34,8 +33,12 @@ if isfield(Fem.system,'Contact') && ~Fem.options.isPrescribed
     [Fnc, Ftc, Knc, Ktc] = assembleContactForces(Fem);
     Fem.system.Tangent = Fem.system.Tangent ... 
         + Knc(qa,qa) + Ktc(qa,qa);
-    % Fem.system.Damping = Fem.system.Damping ... 
-    %     + Knc(qa,qa) * Fem.solver.TimeStep;      
+
+    if Fem.options.isForceContactDamping        
+        Fem.system.Damping = Fem.system.Damping ... 
+            + Knc(qa,qa) * Fem.solver.TimeStep;     
+    end 
+
 end
 
 % adding displacement loads
