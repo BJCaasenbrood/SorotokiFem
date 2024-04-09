@@ -17,6 +17,9 @@ classdef topooptions
         InputStiffness;
         OutputStiffness;
         Periodic;
+        Repeat;
+        ReflectionPlane;
+        CellRepetion;
         Penal;
         MaxPenal;
         MaxChange;
