@@ -15,6 +15,7 @@ for ii = 1:3:length(varargin)
                 else
                     f = varargin{ii+2};
                     Fem.system.(varargin{ii}) = [Fem.system.(varargin{ii}); {varargin{ii+1}},{f}];
+                    1
                 end       
             end     
         
@@ -47,7 +48,8 @@ for ii = 1:3:length(varargin)
         % else
 
         if strcmpi(varargin{ii},'support') || strcmpi(varargin{ii},'load') || ...
-           strcmpi(varargin{ii},'tendon') || strcmpi(varargin{ii},'output')
+           strcmpi(varargin{ii},'tendon') || strcmpi(varargin{ii},'output') || ...
+           strcmpi(varargin{ii},'spring')
             
              BC = [varargin{ii+1},repmat(transpose(varargin{ii+2}(:)),...
                  [length(varargin{ii+1}),1])];

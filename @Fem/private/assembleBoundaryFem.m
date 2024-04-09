@@ -78,6 +78,12 @@ if isfield(Fem.system,'Output') && ~Fem.options.isPrescribed
     Fem.triplets.k(fk) = Fem.topology.InputStiffness;
 end
 
+if  isfield(Fem.system,'Spring') && ~Fem.options.isPrescribed
+    [Fs, Ks] = assembleSpringForcesFem(Fem);
+    F = Fs + F;
+    Fem.system.Tangent = Fem.system.Tangent + Ks(qa,qa);
+end
+
 Fem.system.fContact = Fnc(qa);
 Fem.system.fTangent = Ftc(qa);
 Fem.system.fInput   = F(qa) + Ft(qa) + Fnc(qa) + Ftc(qa) + Fc(qa);

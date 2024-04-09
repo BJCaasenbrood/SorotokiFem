@@ -1,4 +1,4 @@
-function F = addBasicLoadsFem(Fem)
+function F = assembleLoadsFem(Fem)
 
 F     = sparse(Fem.Mesh.NNode*Fem.Dim,1);   
 NLoad = size(Fem.system.Load,1);
